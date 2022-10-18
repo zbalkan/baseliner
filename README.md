@@ -16,3 +16,8 @@ options:
   -i IN_PATH   Path to STIG XML file
   -o OUT_PATH  Path for modified STIG XML file
 ```
+
+## Installation and development
+
+- Clone the repository
+- Run `pip install -r requirements.txt`
