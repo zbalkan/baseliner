@@ -22,7 +22,7 @@ def main() -> None:
     parser.add_argument("-i", dest="in_path", type=str, required=True,
                         help="Path to STIG XML file")
     parser.add_argument("-o", dest="out_path", type=str, required=True,
-                        help="Path for modified STIF XML file")
+                        help="Path for modified STIG XML file")
 
     args: argparse.Namespace = parser.parse_args()
     input: str = args.in_path
