@@ -3,14 +3,12 @@ import json
 import os
 import sys
 import xml.etree.ElementTree as ET
-from parser import Benchmark, Group, Parser, Profile, Rule, Select
+from parser import Benchmark, Group, Parser, Profile, Select
 from typing import Any, OrderedDict
 
 import xmltodict
 
 ENCODING: str = "utf-8"
-
-# TODO: Add input and output parameters
 
 
 def main() -> None:
