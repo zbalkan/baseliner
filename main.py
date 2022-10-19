@@ -2,14 +2,14 @@
 # -*- coding: utf-8 -*-
 
 import argparse
-import json
 import os
 import sys
 import xml.etree.ElementTree as ET
-from parser import Benchmark, Group, Parser, Preference, Profile, Select
 from typing import Any, OrderedDict
 
 import xmltodict
+
+from stigParser import Benchmark, Group, Preference, Profile, Select, StigParser
 
 ENCODING: str = "utf-8"
 
@@ -202,7 +202,7 @@ def parse_benchmark(input: str) -> Benchmark:
     # with open("./out/temp.json", "w", encoding=ENCODING) as file:
     #     file.write(json_obj)
 
-    benchmark: Benchmark = Parser.from_dict(xmlAsDict).Benchmark
+    benchmark: Benchmark = StigParser.from_dict(xmlAsDict).Benchmark
     return benchmark
 
 

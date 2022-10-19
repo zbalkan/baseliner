@@ -170,10 +170,10 @@ class Preference:
 
 
 @dataclass
-class Parser:
+class StigParser:
     Benchmark: Benchmark
 
     @staticmethod
-    def from_dict(obj: Any) -> 'Parser':
+    def from_dict(obj: Any) -> 'StigParser':
         _Benchmark: Benchmark = Benchmark.from_dict(obj.get("Benchmark"))
-        return Parser(_Benchmark)
+        return StigParser(_Benchmark)
