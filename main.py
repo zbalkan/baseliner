@@ -6,7 +6,7 @@ import json
 import os
 import sys
 import xml.etree.ElementTree as ET
-from parser import Benchmark, Group, Parser, Profile, Select
+from parser import Benchmark, Group, Parser, Preference, Profile, Select
 from typing import Any, OrderedDict
 
 import xmltodict
@@ -36,7 +36,7 @@ def main() -> None:
 
     print(f"{len(selectedGroups)} rules selected out of {len(benchmark.Group)} by selecting profile \"{selectedProfile.title}\"")
 
-    preferences: list[dict] = prompt_preferences(selectedGroups)
+    preferences: list[Preference] = prompt_preferences(selectedGroups)
 
     customProfile: Profile = get_custom_profile(preferences)
     customProfileXml: ET.Element = generate_profile_xml(customProfile)
@@ -72,17 +72,18 @@ def get_profile_index(root: ET.Element) -> int:
     return -1
 
 
-def save_rationale_xml(profileName: str, preferences: list[dict], output: str) -> None:
-    rejected: list[dict] = [p for p in preferences if p["applicable"] == False]
+def save_rationale_xml(profileName: str, preferences: list[Preference], output: str) -> None:
+    rejected: list[Preference] = [
+        p for p in preferences if p.applicable == False]
 
     attrs: dict = {}
     attrs["profile"] = profileName
     root: ET.Element = ET.Element("rationale", attrib=attrs)
     for r in rejected:
         attrs: dict = {}
-        attrs["rule"] = r["id"]
-        attrs["title"] = r["rule"]
-        attrs["rationale"] = r["rationale"]
+        attrs["rule"] = r.id
+        attrs["title"] = r.rule
+        attrs["rationale"] = r.rationale
         rationaleElement: ET.Element = ET.Element("item", attrs)
         root.append(rationaleElement)
 
@@ -111,12 +112,13 @@ def generate_profile_xml(custom: Profile) -> ET.Element:
     return p
 
 
-def get_custom_profile(preferences: list[dict]) -> Profile:
+def get_custom_profile(preferences: list[Preference]) -> Profile:
     selected: list[Select] = []
 
-    accepted: list[dict] = [p for p in preferences if p["applicable"] == True]
+    accepted: list[Preference] = [
+        p for p in preferences if p.applicable == True]
     for a in accepted:
-        s: Select = Select(a["id"], "true")
+        s: Select = Select(a.id, "true")
         selected.append(s)
 
     customTitle: str = input("Title for you profile [Custom title]: ")
@@ -131,14 +133,11 @@ def get_custom_profile(preferences: list[dict]) -> Profile:
     return custom
 
 
-def prompt_preferences(selectedGroups: list[Group]) -> list[dict]:
-    scanPreferences: list[dict] = []
+def prompt_preferences(selectedGroups: list[Group]) -> list[Preference]:
+    scanPreferences: list[Preference] = []
     for i in range(len(selectedGroups)):
         group: Group = selectedGroups[i]
-        preference: dict = dict()
-
-        preference["id"] = group.id
-        preference["rule"] = group.Rule.title
+        preference: Preference = None  # type: ignore
 
         print(
             f"Title: {group.Rule.title} (severity: {group.Rule.severity}, weight: {group.Rule.weight})")
@@ -160,11 +159,12 @@ def prompt_preferences(selectedGroups: list[Group]) -> list[dict]:
                 rationale: str = input(
                     "Provide rationale on why you do not want to implement this measure (at least 3 chars): ")
                 if (len(rationale) < 3):
-                    preference["rationale"] = rationale
-                    preference["applicable"] = False
+                    preference = Preference(
+                        group.id, group.Rule.title, False, rationale)
                     invalid = False
         else:
-            preference["applicable"] = True
+            preference = Preference(
+                group.id, group.Rule.title, True, "")
 
         scanPreferences.append(preference)
 

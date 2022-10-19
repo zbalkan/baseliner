@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, List
+from typing import Any, List, Optional
 
 
 @dataclass
@@ -104,16 +104,6 @@ class Profile:
 
 
 @dataclass
-class Parser:
-    Benchmark: Benchmark
-
-    @staticmethod
-    def from_dict(obj: Any) -> 'Parser':
-        _Benchmark: Benchmark = Benchmark.from_dict(obj.get("Benchmark"))
-        return Parser(_Benchmark)
-
-
-@dataclass
 class Rule:
     id: str
     severity: str
@@ -161,3 +151,29 @@ class Status:
         _text: str = str(obj.get("#text"))
         _date: str = str(obj.get("@date"))
         return Status(_text, _date)
+
+
+@dataclass
+class Preference:
+    id: str
+    rule: str
+    applicable: bool
+    rationale: Optional[str] = None
+
+    @staticmethod
+    def from_dict(obj: Any) -> 'Preference':
+        _id: str = str(obj.get("id"))
+        _rule: str = str(obj.get("rule"))
+        _rationale: str = str(obj.get("rationale"))
+        _applicable: bool = bool(obj.get("applicable"))
+        return Preference(_id, _rule, _applicable, _rationale)
+
+
+@dataclass
+class Parser:
+    Benchmark: Benchmark
+
+    @staticmethod
+    def from_dict(obj: Any) -> 'Parser':
+        _Benchmark: Benchmark = Benchmark.from_dict(obj.get("Benchmark"))
+        return Parser(_Benchmark)
