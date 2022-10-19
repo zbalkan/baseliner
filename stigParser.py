@@ -1,5 +1,9 @@
 from dataclasses import dataclass
-from typing import Any, List, Optional
+from typing import Any, List, Optional, OrderedDict
+
+import xmltodict
+
+ENCODING: str = "utf-8"
 
 
 @dataclass
@@ -177,3 +181,9 @@ class StigParser:
     def from_dict(obj: Any) -> 'StigParser':
         _Benchmark: Benchmark = Benchmark.from_dict(obj.get("Benchmark"))
         return StigParser(_Benchmark)
+
+    @staticmethod
+    def parse(input: str) -> 'StigParser':
+        with open(input, "r", encoding=ENCODING) as file:
+            xmlAsDict: OrderedDict[str, Any] = xmltodict.parse(file.read())
+        return StigParser.from_dict(xmlAsDict)
