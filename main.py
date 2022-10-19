@@ -196,10 +196,11 @@ def parse_benchmark(input: str) -> Benchmark:
     with open(input, "r", encoding=ENCODING) as file:
         xmlAsDict: OrderedDict[str, Any] = xmltodict.parse(file.read())
 
-    json_obj: str = json.dumps(xmlAsDict, sort_keys=True, indent=4)
+    # Enable thıs to have an artifact in the middle of the process
+    # json_obj: str = json.dumps(xmlAsDict, sort_keys=True, indent=4)
 
-    with open("./out/temp.json", "w", encoding=ENCODING) as file:
-        file.write(json_obj)
+    # with open("./out/temp.json", "w", encoding=ENCODING) as file:
+    #     file.write(json_obj)
 
     benchmark: Benchmark = Parser.from_dict(xmlAsDict).Benchmark
     return benchmark
