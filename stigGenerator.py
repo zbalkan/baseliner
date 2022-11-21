@@ -1,3 +1,4 @@
+from zipfile import ZipFile
 from stigParser import Benchmark, Group, Preference, Profile, Select
 from colorama import Fore, Style
 import xml.etree.ElementTree as ET
@@ -27,7 +28,7 @@ class StigGenerator:
                     raise Exception(
                         "Invalid checkpoint file. Please remove the file and restart.")
         else:
-            StigGenerator.clear()
+            StigGenerator.__clear()
             print(f"{Fore.GREEN}Please select a profile below:{Style.RESET_ALL}\n")
             opt: int = 1
             for profile in benchmark.Profile:
@@ -64,18 +65,20 @@ class StigGenerator:
                 text: str = file.read()
 
                 match = re.search("last:([0-9]+)", text)
-                if match:
-                    # Start after last saved answer
-                    start = int(match.group(1)) + 1
+                if (match):
+                    # Start after last saved answer, except it is already the beginning.
+                    last = int(match.group(1))
+                    if (last != 0):
+                        start = last + 1
                 else:
                     raise Exception(
                         "Invalid checkpoint file. Please remove the file and restart.")
 
-        for i in range(start, len(selectedGroups) - 1, 1):
+        for i in range(start, len(selectedGroups), 1):
             group: Group = selectedGroups[i]
             preference: Preference = None  # type: ignore
 
-            StigGenerator.clear()
+            StigGenerator.__clear()
             print(
                 f"{Fore.YELLOW}Title:{Style.RESET_ALL} {group.Rule.title}\n(severity: {Fore.RED}{group.Rule.severity}{Style.RESET_ALL}, weight: {Fore.RED}{group.Rule.weight}{Style.RESET_ALL})")
 
@@ -162,7 +165,7 @@ class StigGenerator:
     def generate_profile(customProfile: Profile, input: str, output: str) -> None:
         customProfileXml: ET.Element = StigGenerator.__generate_profile_xml(
             customProfile)
-        StigGenerator.__save_modified_xml(customProfileXml, input, output)
+        StigGenerator.__save_modified_zip(customProfileXml, input, output)
 
     @staticmethod
     def generate_rationale(customProfile: Profile, preferences: list[Preference], output: str) -> None:
@@ -170,7 +173,11 @@ class StigGenerator:
             customProfile.title, preferences, output)
 
     @staticmethod
-    def get_profile_index(root: ET.Element) -> int:
+    def close() -> None:
+        os.remove(CHECKPOINT_FILE)
+
+    @staticmethod
+    def __get_profile_index(root: ET.Element) -> int:
         for i in range(len(root)):
             child: ET.Element = root[i]
             if str(child.tag).endswith("Profile"):
@@ -178,7 +185,7 @@ class StigGenerator:
         return -1
 
     @staticmethod
-    def __save_modified_xml(customProfileXml: ET.Element, input: str, output: str) -> None:
+    def __save_modified_zip(customProfileXml: ET.Element, input: str, output: str) -> None:
         # DevSkim: ignore DS137138
         ET.register_namespace('', 'http://checklists.nist.gov/xccdf/1.1')
         # DevSkim: ignore DS137138
@@ -192,12 +199,42 @@ class StigGenerator:
         ET.register_namespace(
             'xsi', 'http://www.w3.org/2001/XMLSchema-instance')  # DevSkim: ignore DS137138
 
-        tree: ET.ElementTree = ET.parse(input)
+        # Read from zip
+        # TODO: Use a utility class
+        archive: ZipFile = ZipFile(input, 'r')
+        baseFileName: str = os.path.basename(input)
+        folderName: str = baseFileName.replace(
+            "_STIG", "_Manual_STIG").removesuffix(".zip")
+        xccdfFileName: str = folderName.replace(
+            "_STIG", "-xccdf.xml").replace("_V1R6", "_STIG_V1R6")
+        archive.extract(f"{folderName}/{xccdfFileName}")
+        archive.close()
+
+        # Create XML
+        tree: ET.ElementTree = ET.parse(f"{folderName}/{xccdfFileName}")
         root: ET.Element = tree.getroot()
-        index: int = StigGenerator.get_profile_index(root)
+        index: int = StigGenerator.__get_profile_index(root)
         root.insert(index, customProfileXml)
         ET.indent(tree)
-        tree.write(output)
+        tmp: str = os.path.join(output, "modified.xml")
+        tree.write(tmp)
+
+        # Create new zip
+        zin: ZipFile = ZipFile(input, 'r')
+        zout: ZipFile = ZipFile(os.path.join(
+            output, os.path.basename(input).replace(".zip", "_new.zip")), 'w')
+        for item in zin.infolist():
+            buffer = zin.read(item.filename)
+            if (item.filename.find(xccdfFileName) == -1):
+                zout.writestr(item, buffer)
+        zout.write(tmp, f"{folderName}/{xccdfFileName}")
+        zout.close()
+        zin.close()
+
+        # Cleanup
+        os.remove(tmp)
+        os.remove(f"{folderName}/{xccdfFileName}")
+        os.removedirs(folderName)
 
     @staticmethod
     def __save_rationale_xml(profileName: str, preferences: list[Preference], output: str) -> None:
@@ -215,7 +252,7 @@ class StigGenerator:
             rationaleElement: ET.Element = ET.Element("item", attrs)
             root.append(rationaleElement)
 
-        rationaleOutput: str = output.replace(".xml", ".rationale.xml")
+        rationaleOutput: str = os.path.join(output, "rationale.xml")
         with open(rationaleOutput, "w") as file:
             ET.indent(root)
             xmlAsStr: str = ET.tostring(root, encoding="unicode")
@@ -240,14 +277,14 @@ class StigGenerator:
         return p
 
     @staticmethod
-    def clear() -> None:
+    def __clear() -> None:
         if (sys.platform == "win32"):
-            _: int = StigGenerator.__clearWin32()
+            _: int = StigGenerator.__clear_win32()
         else:
-            _: int = StigGenerator.__clearUnix()
+            _: int = StigGenerator.__clear_unix()
 
     @staticmethod
-    def __clearUnix() -> int: return os.system('clear')
+    def __clear_unix() -> int: return os.system('clear')
 
     @staticmethod
-    def __clearWin32() -> int: return os.system('cls')
+    def __clear_win32() -> int: return os.system('cls')

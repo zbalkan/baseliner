@@ -192,10 +192,11 @@ class StigParser:
 
     @staticmethod
     def parseZip(input: str) -> 'StigParser':
+        # TODO: Use a utility class
         archive: ZipFile = ZipFile(input, 'r')
-
         baseFileName: str = os.path.basename(input)
-        folderName: str = baseFileName.replace("_STIG", "_Manual_STIG").removesuffix(".zip")
+        folderName: str = baseFileName.replace(
+            "_STIG", "_Manual_STIG").removesuffix(".zip")
         xccdfFileName: str = folderName.replace(
             "_STIG", "-xccdf.xml").replace("_V1R6", "_STIG_V1R6")
         fileAsBytes: bytes = archive.read(f"{folderName}/{xccdfFileName}")
