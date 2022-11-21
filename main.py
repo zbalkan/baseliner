@@ -20,12 +20,15 @@ def main() -> None:
         argParser.print_help()
     argParser.add_argument("-i", dest="in_path", type=str, required=True,
                            help="Path to STIG Zip file")
-    argParser.add_argument("-o", dest="out_path", type=str, required=True,
-                           help="Directory for modified STIG Zip file")
+    argParser.add_argument("-o", dest="out_path", type=str, required=False,
+                           help="Directory for modified STIG Zip file (default: input directory)")
 
     args: argparse.Namespace = argParser.parse_args()
     input: str = os.path.abspath(args.in_path)
-    output: str = os.path.abspath(args.out_path)
+    if (args.out_path is None):
+        output: str = os.path.dirname(input)  # Default value
+    else:
+        output: str = os.path.abspath(args.out_path)
 
     if (input.endswith(".zip") == False):
         raise Exception("Invalid input parameter.")
