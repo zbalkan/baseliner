@@ -5,20 +5,43 @@ import sys
 import re
 import os
 
+CHECKPOINT_FILE: str = os.path.join(os.path.dirname(
+    os.path.realpath(__file__)), "checkpoint.tmp")
+ENCODING: str = "UTF-8"
+
 
 class StigGenerator:
 
     @staticmethod
     def prompt_profile(benchmark: Benchmark) -> Profile:
-        StigGenerator.clear()
-        print(f"{Fore.GREEN}Please select a profile below:{Style.RESET_ALL}\n")
-        opt: int = 1
-        for profile in benchmark.Profile:
-            print(f"[{opt}] {profile.title}")
-            opt += 1
 
-        selected: str = input(f"\n{Fore.GREEN}Selection: {Style.RESET_ALL}")
-        return benchmark.Profile[int(selected) - 1]
+        if (os.path.exists(CHECKPOINT_FILE)):
+            with open(CHECKPOINT_FILE, "a+", encoding=ENCODING) as file:
+                file.seek(0)
+                text: str = file.read()
+                match = re.search("profile:([0-9]+)", text)
+                if match:
+                    selected: int = int(match.group(1))
+                    return benchmark.Profile[selected]
+                else:
+                    raise Exception(
+                        "Invalid checkpoint file. Please remove the file and restart.")
+        else:
+            StigGenerator.clear()
+            print(f"{Fore.GREEN}Please select a profile below:{Style.RESET_ALL}\n")
+            opt: int = 1
+            for profile in benchmark.Profile:
+                print(f"[{opt}] {profile.title}")
+                opt += 1
+
+            selected = int(
+                input(f"\n{Fore.GREEN}Selection: {Style.RESET_ALL}")) - 1
+
+            # Save as checkpoint
+            with open(CHECKPOINT_FILE, "a+", encoding=ENCODING) as file:
+                file.write(f"profile:{selected}\nlast:0\n")
+
+            return benchmark.Profile[selected]
 
     @staticmethod
     def filter_groups(benchmark: Benchmark, selectedProfile: Profile) -> list[Group]:
@@ -33,7 +56,22 @@ class StigGenerator:
     @staticmethod
     def prompt_preferences(selectedGroups: list[Group]) -> list[Preference]:
         scanPreferences: list[Preference] = []
-        for i in range(len(selectedGroups)):
+
+        start: int = 0
+        if (os.path.exists(CHECKPOINT_FILE)):
+            with open(CHECKPOINT_FILE, "a+", encoding=ENCODING) as file:
+                file.seek(0)
+                text: str = file.read()
+
+                match = re.search("last:([0-9]+)", text)
+                if match:
+                    # Start after last saved answer
+                    start = int(match.group(1)) + 1
+                else:
+                    raise Exception(
+                        "Invalid checkpoint file. Please remove the file and restart.")
+
+        for i in range(start, len(selectedGroups) - 1, 1):
             group: Group = selectedGroups[i]
             preference: Preference = None  # type: ignore
 
@@ -55,12 +93,12 @@ class StigGenerator:
                 r"(\$.+)", fr"{Fore.GREEN}\1{Style.RESET_ALL}", mitigation)
             print(f"\n{Fore.YELLOW}Mitigation:{Style.RESET_ALL}\n{mitigation}")
 
+            # Fix new lines
             control: str = group.Rule.check.check_content.replace(
                 "\\\\n", "\n")
-
+            # Format code
             control = re.sub(
                 r"(\$.+)", fr"{Fore.GREEN}\1{Style.RESET_ALL}", control)
-
             print(
                 f"\n{Fore.YELLOW}Control:{Style.RESET_ALL}\n{control}")
 
@@ -88,6 +126,14 @@ class StigGenerator:
                     group.id, group.Rule.title, True, "")
 
             scanPreferences.append(preference)
+
+            # Save as checkpoint
+            with open(CHECKPOINT_FILE, "a+", encoding=ENCODING) as file:
+                file.seek(0)
+                content: str = file.read()
+                content = re.sub(r"last:([0-9]+)", f"last:{i}", content)
+                file.truncate(0)
+                file.write(content)
 
         return scanPreferences
 
