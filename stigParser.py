@@ -1,7 +1,9 @@
 from dataclasses import dataclass
 from typing import Any, List, Optional, OrderedDict
 
+import os
 import xmltodict
+from zipfile import ZipFile
 
 ENCODING: str = "utf-8"
 
@@ -183,7 +185,21 @@ class StigParser:
         return StigParser(_Benchmark)
 
     @staticmethod
-    def parse(input: str) -> 'StigParser':
+    def parseXccdf(input: str) -> 'StigParser':
         with open(input, "r", encoding=ENCODING) as file:
             xmlAsDict: OrderedDict[str, Any] = xmltodict.parse(file.read())
+        return StigParser.from_dict(xmlAsDict)
+
+    @staticmethod
+    def parseZip(input: str) -> 'StigParser':
+        archive: ZipFile = ZipFile(input, 'r')
+
+        baseFileName: str = os.path.basename(input)
+        folderName: str = baseFileName.replace("_STIG", "_Manual_STIG").removesuffix(".zip")
+        xccdfFileName: str = folderName.replace(
+            "_STIG", "-xccdf.xml").replace("_V1R6", "_STIG_V1R6")
+        fileAsBytes: bytes = archive.read(f"{folderName}/{xccdfFileName}")
+        archive.close()
+        xmlAsDict: OrderedDict[str, Any] = xmltodict.parse(
+            fileAsBytes, encoding=ENCODING)
         return StigParser.from_dict(xmlAsDict)

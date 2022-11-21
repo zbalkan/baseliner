@@ -5,6 +5,7 @@ import argparse
 import os
 import sys
 
+
 from stigGenerator import StigGenerator
 from stigParser import Benchmark, Group, Preference, Profile, StigParser
 
@@ -18,15 +19,15 @@ def main() -> None:
     if (len(sys.argv)) == 1:
         argParser.print_help()
     argParser.add_argument("-i", dest="in_path", type=str, required=True,
-                           help="Path to STIG XML file")
+                           help="Path to STIG Zip file")
     argParser.add_argument("-o", dest="out_path", type=str, required=True,
                            help="Path for modified STIG XML file")
 
     args: argparse.Namespace = argParser.parse_args()
-    input: str = args.in_path
-    output: str = args.out_path
+    input: str = os.path.abspath(args.in_path)
+    output: str = os.path.abspath(args.out_path)
 
-    stigParser: StigParser = StigParser.parse(input)
+    stigParser: StigParser = StigParser.parseZip(input)
     benchmark: Benchmark = stigParser.Benchmark
 
     selectedProfile: Profile = StigGenerator.prompt_profile(benchmark)

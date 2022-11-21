@@ -1,19 +1,23 @@
-import xml.etree.ElementTree as ET
-
 from stigParser import Benchmark, Group, Preference, Profile, Select
+from colorama import Fore, Style
+import xml.etree.ElementTree as ET
+import sys
+import re
+import os
 
 
 class StigGenerator:
 
     @staticmethod
     def prompt_profile(benchmark: Benchmark) -> Profile:
-        print("Please select a profile below:\n")
+        StigGenerator.clear()
+        print(f"{Fore.GREEN}Please select a profile below:{Style.RESET_ALL}\n")
         opt: int = 1
         for profile in benchmark.Profile:
             print(f"[{opt}] {profile.title}")
             opt += 1
 
-        selected: str = input("\nSelection: ")
+        selected: str = input(f"\n{Fore.GREEN}Selection: {Style.RESET_ALL}")
         return benchmark.Profile[int(selected) - 1]
 
     @staticmethod
@@ -33,17 +37,40 @@ class StigGenerator:
             group: Group = selectedGroups[i]
             preference: Preference = None  # type: ignore
 
+            StigGenerator.clear()
             print(
-                f"Title: {group.Rule.title} (severity: {group.Rule.severity}, weight: {group.Rule.weight})")
-            print(f"Description: {group.Rule.description}")
-            print(f"Mitigation: {group.Rule.fixtext}")
-            print(f"Control: {group.Rule.check.check_content}")
+                f"{Fore.YELLOW}Title:{Style.RESET_ALL} {group.Rule.title}\n(severity: {Fore.RED}{group.Rule.severity}{Style.RESET_ALL}, weight: {Fore.RED}{group.Rule.weight}{Style.RESET_ALL})")
+
+            # Fix new lines
+            desc: str = group.Rule.description.replace("\\\\n", "\n")
+            # Get rid of leftover XML tags
+            desc = re.sub("</?[A-Za-z]+>", "", desc)
+            print(
+                f"\n{Fore.YELLOW}Description:{Style.RESET_ALL}\n{desc}")
+
+            # Fix new lines
+            mitigation: str = group.Rule.fixtext.text.replace("\\\\n", "\n")
+            # Format code
+            mitigation = re.sub(
+                r"(\$.+)", fr"{Fore.GREEN}\1{Style.RESET_ALL}", mitigation)
+            print(f"\n{Fore.YELLOW}Mitigation:{Style.RESET_ALL}\n{mitigation}")
+
+            control: str = group.Rule.check.check_content.replace(
+                "\\\\n", "\n")
+
+            control = re.sub(
+                r"(\$.+)", fr"{Fore.GREEN}\1{Style.RESET_ALL}", control)
+
+            print(
+                f"\n{Fore.YELLOW}Control:{Style.RESET_ALL}\n{control}")
 
             invalid: bool = True
             prompt: str = ""
             while (invalid):
+                size: int = os.get_terminal_size().columns
+                line: str = ''.join(["*" for i in range(size)])
                 prompt = input(
-                    f"Do you accept this rule for scan? ({i + 1}/{len(selectedGroups)}) [Y/n]: ")
+                    f"\n{line}\nDo you accept this rule for scan? ({i + 1}/{len(selectedGroups)}) [Y/n]: ")
                 if (prompt.capitalize() == "Y" or prompt.capitalize() == "N" or prompt == ""):
                     invalid = False
 
@@ -52,7 +79,7 @@ class StigGenerator:
                 while (invalid):
                     rationale: str = input(
                         "Provide rationale on why you do not want to implement this measure (at least 3 chars): ")
-                    if (len(rationale) < 3):
+                    if (len(rationale) >= 3):
                         preference = Preference(
                             group.id, group.Rule.title, False, rationale)
                         invalid = False
@@ -106,13 +133,18 @@ class StigGenerator:
 
     @staticmethod
     def __save_modified_xml(customProfileXml: ET.Element, input: str, output: str) -> None:
+        # DevSkim: ignore DS137138
         ET.register_namespace('', 'http://checklists.nist.gov/xccdf/1.1')
+        # DevSkim: ignore DS137138
         ET.register_namespace('cpe', 'http://cpe.mitre.org/language/2.0')
+        # DevSkim: ignore DS137138
         ET.register_namespace('dc', 'http://purl.org/dc/elements/1.1/')
+        # DevSkim: ignore DS137138
         ET.register_namespace('dsig', 'http://www.w3.org/2000/09/xmldsig#')
+        # DevSkim: ignore DS137138
         ET.register_namespace('xhtml', 'http://www.w3.org/1999/xhtml')
         ET.register_namespace(
-            'xsi', 'http://www.w3.org/2001/XMLSchema-instance')
+            'xsi', 'http://www.w3.org/2001/XMLSchema-instance')  # DevSkim: ignore DS137138
 
         tree: ET.ElementTree = ET.parse(input)
         root: ET.Element = tree.getroot()
@@ -160,3 +192,16 @@ class StigGenerator:
             p.append(sel)
         ET.indent(p)
         return p
+
+    @staticmethod
+    def clear() -> None:
+        if (sys.platform == "win32"):
+            _: int = StigGenerator.__clearWin32()
+        else:
+            _: int = StigGenerator.__clearUnix()
+
+    @staticmethod
+    def __clearUnix() -> int: return os.system('clear')
+
+    @staticmethod
+    def __clearWin32() -> int: return os.system('cls')
