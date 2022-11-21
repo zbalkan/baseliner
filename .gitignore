@@ -139,3 +139,4 @@ dmypy.json
 .vscode
 /in
 /out
+*.tmp
