@@ -50,9 +50,9 @@ def main() -> None:
     generateReport: bool = args.r
     generateAnsible: bool = args.s
 
-    if (generateAnsible or generateReport):
-        if (which("oscap") is None):
-            raise Exception("OpenScap is required to use this flag")
+    # if (generateAnsible or generateReport):
+    #     if (which("oscap") is None):
+    #         raise Exception("OpenScap is required to use this flag")
 
     stigParser: StigParser = StigParser.parseZip(input)
     benchmark: Benchmark = stigParser.Benchmark
@@ -72,9 +72,10 @@ def main() -> None:
 
     if (generateReport):
         StigGenerator.generate_report(
-            customProfile=customProfile, output=output)
+            customProfile=customProfile, output=output, benchmarkId=benchmark.id)
     if (generateAnsible):
-        StigGenerator.generate_fix(customProfile=customProfile, output=output)
+        StigGenerator.generate_fix(
+            customProfile=customProfile, output=output, benchmarkId=benchmark.id)
 
     StigGenerator.close()
 

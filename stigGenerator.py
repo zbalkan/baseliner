@@ -175,14 +175,14 @@ class StigGenerator:
             customProfile.title, preferences, output)
 
     @staticmethod
-    def generate_fix(customProfile: Profile, output: str) -> None:
+    def generate_fix(customProfile: Profile, output: str, benchmarkId: str) -> None:
         StigScap.generate_ansible(
-            customXccdf=f"{customProfile.id}.xml", outputDirectory=output, name=customProfile.title)
+            profileId=customProfile.id, outputDirectory=output, benchmarkId=benchmarkId)
 
     @staticmethod
-    def generate_report(customProfile: Profile, output: str) -> None:
+    def generate_report(customProfile: Profile, output: str, benchmarkId:str) -> None:
         StigScap.generate_audit_report(
-            customXccdf=f"{customProfile.id}.xml", outputDirectory=output, name=customProfile.title)
+            profileId=customProfile.id, outputDirectory=output, benchmarkId=benchmarkId)
 
     @staticmethod
     def close() -> None:
