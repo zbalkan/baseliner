@@ -62,8 +62,7 @@ def main() -> None:
     custom_profile: Profile = StigGenerator.get_custom_profile(
         preferences=preferences)
 
-    sanitized_file_name: str = benchmark.id.replace(
-        ".", "_").replace(" ", "_").replace("-", "_")
+    sanitized_file_name: str = benchmark.id.replace(" ", "_").replace("-", ".")
     tmp_file: str = os.path.join(output_dir, f"{sanitized_file_name}.xml")
 
     StigGenerator.generate_profile(
