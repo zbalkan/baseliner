@@ -1,13 +1,16 @@
-from zipfile import ZipFile
-from stigParser import Benchmark, Group, Preference, Profile, Select
-from colorama import Fore, Style
-import xml.etree.ElementTree as ET
-import sys
-import re
 import os
+import re
+import sys
+import xml.etree.ElementTree as ET
+
+from colorama import Fore, Style
+
+from stigParser import Benchmark, Group, Preference, Profile, Select
+from stigZip import StigZip
 
 CHECKPOINT_FILE: str = os.path.join(os.path.dirname(
     os.path.realpath(__file__)), "checkpoint.tmp")
+
 ENCODING: str = "UTF-8"
 
 
@@ -200,15 +203,7 @@ class StigGenerator:
             'xsi', 'http://www.w3.org/2001/XMLSchema-instance')  # DevSkim: ignore DS137138
 
         # Read from zip
-        # TODO: Use a utility class
-        archive: ZipFile = ZipFile(input, 'r')
-        baseFileName: str = os.path.basename(input)
-        folderName: str = baseFileName.replace(
-            "_STIG", "_Manual_STIG").removesuffix(".zip")
-        xccdfFileName: str = folderName.replace(
-            "_STIG", "-xccdf.xml").replace("_V1R6", "_STIG_V1R6")
-        archive.extract(f"{folderName}/{xccdfFileName}")
-        archive.close()
+        folderName, xccdfFileName = StigZip.extract_xccdf(input)
 
         # Create XML
         tree: ET.ElementTree = ET.parse(f"{folderName}/{xccdfFileName}")
@@ -220,16 +215,8 @@ class StigGenerator:
         tree.write(tmp)
 
         # Create new zip
-        zin: ZipFile = ZipFile(input, 'r')
-        zout: ZipFile = ZipFile(os.path.join(
-            output, os.path.basename(input).replace(".zip", "_new.zip")), 'w')
-        for item in zin.infolist():
-            buffer = zin.read(item.filename)
-            if (item.filename.find(xccdfFileName) == -1):
-                zout.writestr(item, buffer)
-        zout.write(tmp, f"{folderName}/{xccdfFileName}")
-        zout.close()
-        zin.close()
+        StigZip.generate_stig_zip(
+            input, output, folderName, xccdfFileName, tmp)
 
         # Cleanup
         os.remove(tmp)
@@ -245,7 +232,7 @@ class StigGenerator:
         attrs["profile"] = profileName
         root: ET.Element = ET.Element("rationale", attrib=attrs)
         for r in rejected:
-            attrs: dict = {}
+            attrs = {}
             attrs["rule"] = r.id
             attrs["title"] = r.rule
             attrs["rationale"] = r.rationale

@@ -5,7 +5,6 @@ import argparse
 import os
 import sys
 
-
 from stigGenerator import StigGenerator
 from stigParser import Benchmark, Group, Preference, Profile, StigParser
 
@@ -28,7 +27,7 @@ def main() -> None:
     if (args.out_path is None):
         output: str = os.path.dirname(input)  # Default value
     else:
-        output: str = os.path.abspath(args.out_path)
+        output = os.path.abspath(args.out_path)
 
     if (input.endswith(".zip") == False):
         raise Exception("Invalid input parameter.")
