@@ -204,17 +204,17 @@ class StigGenerator:
 
         # Create XML
         xmlInput: str = os.path.join(output, f"{folderName}/{xccdfFileName}")
+        xmlOutput: str = os.path.join(output, f"{benchmarkId}.xml")
         StigGenerator.__generate_xml_file(
-            customProfile=customProfile, input=xmlInput, output=os.path.join(output, f"{benchmarkId}.xml"))
+            customProfile=customProfile, input=xmlInput, output=xmlOutput)
 
         # Create new zip
 
         StigZip.generate_stig_zip(
-            input, output, folderName, xccdfFileName, f"{benchmarkId}.xml")
+            input, output, folderName, xccdfFileName, xmlOutput)
 
         # Cleanup
-        os.remove(f"{folderName}/{xccdfFileName}")
-        os.removedirs(folderName)
+        # os.remove(xmlOutput)
 
     @staticmethod
     def __generate_xml_file(customProfile: Profile, input: str, output: str) -> None:
