@@ -12,7 +12,7 @@ class StigScap:
 
     @staticmethod
     def generate_ansible(profileId: str, outputDirectory: str, tmpXmlFile: str) -> None:
-        out: str = os.path.abspath(outputDirectory)
+        ansiblePath: str = os.path.join(outputDirectory, f"{profileId}.yml")
         sanitizedProfileId: str = profileId.replace(" ", "_")
 
         # Create ARF result
@@ -29,13 +29,13 @@ class StigScap:
 
         # Generate ansible script
         StigScap.__run_oscap_command(
-            f"sudo oscap xccdf generate fix --fetch-remote-resources --fix-type ansible --result-id \"\" {ARF_PATH} > {tmpXmlFile}.yml")
+            f"sudo oscap xccdf generate fix --fetch-remote-resources --fix-type ansible --result-id \"\" {ARF_PATH} > {ansiblePath}")
 
         os.remove(ARF_PATH)
 
     @staticmethod
     def generate_audit_report(profileId: str, outputDirectory: str, tmpXmlFile: str) -> None:
-        out: str = os.path.abspath(outputDirectory)
+        reportPath: str = os.path.join(outputDirectory, f"{profileId}.html")
         sanitizedProfileId: str = profileId.replace(" ", "_")
 
         # Create ARF result
@@ -52,7 +52,7 @@ class StigScap:
 
         # Generate audit report
         StigScap.__run_oscap_command(
-            f"sudo oscap xccdf eval --fetch-remote-resources --profile {sanitizedProfileId} --results-arf {ARF_PATH} --report {tmpXmlFile}.html {tmpXmlFile}")
+            f"sudo oscap xccdf eval --fetch-remote-resources --profile {sanitizedProfileId} --results-arf {ARF_PATH} --report {reportPath}.html {tmpXmlFile}")
 
         os.remove(ARF_PATH)
 
