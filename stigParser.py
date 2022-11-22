@@ -194,7 +194,7 @@ class StigParser:
 
     @ staticmethod
     def parseZip(input: str) -> 'StigParser':
-        fileAsBytes = StigZip.read_xccdf(input)
+        fileAsBytes: bytes = StigZip.read_xccdf(input)
         xmlAsDict: OrderedDict[str, Any] = xmltodict.parse(
             fileAsBytes, encoding=ENCODING)
         return StigParser.from_dict(xmlAsDict)

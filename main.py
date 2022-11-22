@@ -11,6 +11,7 @@ from stigParser import Benchmark, Group, Preference, Profile, StigParser
 
 ENCODING: str = "utf-8"
 
+
 def main() -> None:
 
     argParser: argparse.ArgumentParser = argparse.ArgumentParser(
@@ -58,7 +59,8 @@ def main() -> None:
         selectedGroups)
 
     customProfile: Profile = StigGenerator.get_custom_profile(preferences)
-    StigGenerator.generate_profile(customProfile, input, output)
+    StigGenerator.generate_profile(
+        customProfile=customProfile, input=input, output=output, benchmarkId=benchmark.id)
     StigGenerator.generate_rationale(customProfile, preferences, output)
 
     if (generateReport):

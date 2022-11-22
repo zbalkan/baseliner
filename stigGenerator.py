@@ -166,8 +166,9 @@ class StigGenerator:
         return custom
 
     @staticmethod
-    def generate_profile(customProfile: Profile, input: str, output: str) -> None:
-        StigGenerator.__save_modified_zip(customProfile, input, output)
+    def generate_profile(customProfile: Profile, input: str, output: str, benchmarkId: str) -> None:
+        StigGenerator.__save_modified_zip(
+            customProfile, input, output, benchmarkId)
 
     @staticmethod
     def generate_rationale(customProfile: Profile, preferences: list[Preference], output: str) -> None:
@@ -180,7 +181,7 @@ class StigGenerator:
             profileId=customProfile.id, outputDirectory=output, benchmarkId=benchmarkId)
 
     @staticmethod
-    def generate_report(customProfile: Profile, output: str, benchmarkId:str) -> None:
+    def generate_report(customProfile: Profile, output: str, benchmarkId: str) -> None:
         StigScap.generate_audit_report(
             profileId=customProfile.id, outputDirectory=output, benchmarkId=benchmarkId)
 
@@ -197,23 +198,26 @@ class StigGenerator:
         return -1
 
     @staticmethod
-    def __save_modified_zip(customProfile: Profile, input: str, output: str) -> None:
+    def __save_modified_zip(customProfile: Profile, input: str, output: str, benchmarkId: str) -> None:
         # Read from zip
-        folderName, xccdfFileName = StigZip.extract_xccdf(input)
+        folderName, xccdfFileName = StigZip.extract_xccdf(input, output)
 
         # Create XML
+        xmlInput: str = os.path.join(output, f"{folderName}/{xccdfFileName}")
         StigGenerator.__generate_xml_file(
-            customProfile=customProfile, folderName=folderName, xccdfFileName=xccdfFileName)
+            customProfile=customProfile, input=xmlInput, output=os.path.join(output, f"{benchmarkId}.xml"))
+
         # Create new zip
+
         StigZip.generate_stig_zip(
-            input, output, folderName, xccdfFileName, f"{customProfile.id}.xml")
+            input, output, folderName, xccdfFileName, f"{benchmarkId}.xml")
 
         # Cleanup
         os.remove(f"{folderName}/{xccdfFileName}")
         os.removedirs(folderName)
 
     @staticmethod
-    def __generate_xml_file(customProfile: Profile, folderName: str, xccdfFileName: str) -> None:
+    def __generate_xml_file(customProfile: Profile, input: str, output: str) -> None:
         # DevSkim: ignore DS137138
         ET.register_namespace('', 'http://checklists.nist.gov/xccdf/1.1')
         # DevSkim: ignore DS137138
@@ -229,7 +233,7 @@ class StigGenerator:
 
         customProfileXml: ET.Element = StigGenerator.__generate_profile_xml(
             customProfile)
-        tree: ET.ElementTree = ET.parse(f"{folderName}/{xccdfFileName}")
+        tree: ET.ElementTree = ET.parse(input)
         root: ET.Element = tree.getroot()
         index: int = StigGenerator.__get_profile_index(root)
         root.insert(index, customProfileXml)

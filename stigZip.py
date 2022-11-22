@@ -21,16 +21,16 @@ class StigZip:
         return fileAsBytes
 
     @staticmethod
-    def extract_xccdf(zipFilePath: str) -> tuple[str, str]:
+    def extract_xccdf(zipFilePath: str, output: str) -> tuple[str, str]:
         archive: ZipFile = ZipFile(zipFilePath, 'r')
         baseFileName: str = os.path.basename(zipFilePath)
         folderName: str = baseFileName.replace(
             "_STIG", "_Manual_STIG").removesuffix(".zip")
         xccdfFileName: str = folderName.replace(
             "_STIG", "-xccdf.xml").replace("_V1R6", "_STIG_V1R6")
-        archive.extract(f"{folderName}/{xccdfFileName}")
+        archive.extract(f"{folderName}/{xccdfFileName}", output)
         archive.close()
-        return folderName, xccdfFileName # TODO: Change extract path
+        return folderName, xccdfFileName
 
     @staticmethod
     def generate_stig_zip(zipFilePath: str, outputDirectory: str, folderInZip: str, xccdfFileInZip: str, modifiedXccdf: str) -> None:
