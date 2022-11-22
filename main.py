@@ -46,32 +46,35 @@ def main() -> None:
     #     if (which("oscap") is None):
     #         raise Exception("OpenScap is required to use this flag")
 
-    stigParser: StigParser = StigParser.parseZip(input)
+    stigParser: StigParser = StigParser.parseZip(zipFile=input)
     benchmark: Benchmark = stigParser.Benchmark
 
-    selectedProfile: Profile = StigGenerator.prompt_profile(benchmark)
+    selectedProfile: Profile = StigGenerator.prompt_profile(
+        benchmark=benchmark)
     selectedGroups: list[Group] = StigGenerator.filter_groups(
-        benchmark, selectedProfile)
+        benchmark=benchmark, selectedProfile=selectedProfile)
 
     print(f"{len(selectedGroups)} rules selected out of {len(benchmark.Group)} by selecting profile \"{selectedProfile.title}\"")
 
     preferences: list[Preference] = StigGenerator.prompt_preferences(
         selectedGroups=selectedGroups)
 
-    customProfile: Profile = StigGenerator.get_custom_profile(preferences)
+    customProfile: Profile = StigGenerator.get_custom_profile(
+        preferences=preferences)
 
     tmpFile: str = os.path.join(output, f"{benchmark.id}.xml")
+
     StigGenerator.generate_profile(
-        customProfile=customProfile, input=input, output=output, tmpXmlFile=tmpFile)
+        customProfile=customProfile, stigFile=input, outputDirectory=output, tmpXmlFile=tmpFile)
     StigGenerator.generate_rationale(
-        customProfile=customProfile, preferences=preferences, output=output)
+        customProfile=customProfile, preferences=preferences, outputDirectory=output)
 
     if (generateReport):
         StigGenerator.generate_report(
-            customProfile=customProfile, output=output, tmpXmlFile=tmpFile)
+            customProfile=customProfile, outputDirectory=output, tmpXmlFile=tmpFile)
     if (generateAnsible):
         StigGenerator.generate_fix(
-            customProfile=customProfile, output=output, tmpXmlFile=tmpFile)
+            customProfile=customProfile, outputDirectory=output, tmpXmlFile=tmpFile)
 
     StigGenerator.close()
 

@@ -187,14 +187,14 @@ class StigParser:
         return StigParser(_Benchmark)
 
     @ staticmethod
-    def parseXccdf(input: str) -> 'StigParser':
-        with open(input, "r", encoding=ENCODING) as file:
+    def parseXccdf(xmlFile: str) -> 'StigParser':
+        with open(xmlFile, "r", encoding=ENCODING) as file:
             xmlAsDict: OrderedDict[str, Any] = xmltodict.parse(file.read())
         return StigParser.from_dict(xmlAsDict)
 
     @ staticmethod
-    def parseZip(input: str) -> 'StigParser':
-        fileAsBytes: bytes = StigZip.read_xccdf(input)
+    def parseZip(zipFile: str) -> 'StigParser':
+        fileAsBytes: bytes = StigZip.read_xccdf(zipFilePath=zipFile)
         xmlAsDict: OrderedDict[str, Any] = xmltodict.parse(
             fileAsBytes, encoding=ENCODING)
-        return StigParser.from_dict(xmlAsDict)
+        return StigParser.from_dict(obj=xmlAsDict)

@@ -21,14 +21,14 @@ class StigZip:
         return fileAsBytes
 
     @staticmethod
-    def extract_xccdf(zipFilePath: str, output: str) -> tuple[str, str]:
+    def extract_xccdf(zipFilePath: str, outputDirectory: str) -> tuple[str, str]:
         archive: ZipFile = ZipFile(zipFilePath, 'r')
         baseFileName: str = os.path.basename(zipFilePath)
         folderName: str = baseFileName.replace(
             "_STIG", "_Manual_STIG").removesuffix(".zip")
         xccdfFileName: str = folderName.replace(
             "_STIG", "-xccdf.xml").replace("_V1R6", "_STIG_V1R6")
-        archive.extract(f"{folderName}/{xccdfFileName}", output)
+        archive.extract(f"{folderName}/{xccdfFileName}", outputDirectory)
         archive.close()
         return folderName, xccdfFileName
 

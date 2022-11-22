@@ -32,7 +32,7 @@ class StigGenerator:
                     raise Exception(
                         "Invalid checkpoint file. Please remove the file and restart.")
         else:
-            StigGenerator.__clear()
+            StigGenerator.__clear_console()
             print(f"{Fore.GREEN}Please select a profile below:{Style.RESET_ALL}\n")
             opt: int = 1
             for profile in benchmark.Profile:
@@ -71,7 +71,7 @@ class StigGenerator:
                 match = re.search("last:([0-9]+)", text)
                 if (match):
                     # Start after last saved answer, except it is already the beginning.
-                    last = int(match.group(1))
+                    last: int = int(match.group(1))
                     if (last != 0):
                         start = last + 1
                 else:
@@ -82,7 +82,7 @@ class StigGenerator:
             group: Group = selectedGroups[i]
             preference: Preference = None  # type: ignore
 
-            StigGenerator.__clear()
+            StigGenerator.__clear_console()
             print(
                 f"{Fore.YELLOW}Title:{Style.RESET_ALL} {group.Rule.title}\n(severity: {Fore.RED}{group.Rule.severity}{Style.RESET_ALL}, weight: {Fore.RED}{group.Rule.weight}{Style.RESET_ALL})")
 
@@ -126,11 +126,11 @@ class StigGenerator:
                         "Provide rationale on why you do not want to implement this measure (at least 3 chars): ")
                     if (len(rationale) >= 3):
                         preference = Preference(
-                            group.id, group.Rule.title, False, rationale)
+                            id=group.id, rule=group.Rule.title, applicable=False, rationale=rationale)
                         invalid = False
             else:
                 preference = Preference(
-                    group.id, group.Rule.title, True, "")
+                    id=group.id, rule=group.Rule.title, applicable=True, rationale="")
 
             scanPreferences.append(preference)
 
@@ -151,7 +151,7 @@ class StigGenerator:
         accepted: list[Preference] = [
             p for p in preferences if p.applicable == True]
         for a in accepted:
-            s: Select = Select(a.id, "true")
+            s: Select = Select(idref=a.id, selected="true")
             selected.append(s)
 
         customTitle: str = input("Title for you profile [Custom title]: ")
@@ -162,28 +162,29 @@ class StigGenerator:
         if (customDesc == ""):
             customDesc = "Custom description"
         customId: str = customTitle.replace(" ", "_").replace("-", "_")
-        custom: Profile = Profile(customTitle, customDesc, selected, customId)
+        custom: Profile = Profile(
+            title=customTitle, description=customDesc, select=selected, id=customId)
         return custom
 
     @staticmethod
-    def generate_profile(customProfile: Profile, input: str, output: str, tmpXmlFile: str) -> None:
+    def generate_profile(customProfile: Profile, stigFile: str, outputDirectory: str, tmpXmlFile: str) -> None:
         StigGenerator.__save_modified_zip(
-            customProfile=customProfile, input=input, output=output, xmlOutput=tmpXmlFile)
+            customProfile=customProfile, zipFilePath=stigFile, outputDirectory=outputDirectory, xmlOutput=tmpXmlFile)
 
     @staticmethod
-    def generate_rationale(customProfile: Profile, preferences: list[Preference], output: str) -> None:
+    def generate_rationale(customProfile: Profile, preferences: list[Preference], outputDirectory: str) -> None:
         StigGenerator.__save_rationale_xml(
-            customProfile.title, preferences, output)
+            profileName=customProfile.title, preferences=preferences, outputDirectory=outputDirectory)
 
     @staticmethod
-    def generate_fix(customProfile: Profile, output: str, tmpXmlFile: str) -> None:
+    def generate_fix(customProfile: Profile, outputDirectory: str, tmpXmlFile: str) -> None:
         StigScap.generate_ansible(
-            profileId=customProfile.id, outputDirectory=output, tmpXmlFile=tmpXmlFile)
+            profileId=customProfile.id, outputDirectory=outputDirectory, tmpXmlFile=tmpXmlFile)
 
     @staticmethod
-    def generate_report(customProfile: Profile, output: str, tmpXmlFile: str) -> None:
+    def generate_report(customProfile: Profile, outputDirectory: str, tmpXmlFile: str) -> None:
         StigScap.generate_audit_report(
-            profileId=customProfile.id, outputDirectory=output, tmpXmlFile=tmpXmlFile)
+            profileId=customProfile.id, outputDirectory=outputDirectory, tmpXmlFile=tmpXmlFile)
 
     @staticmethod
     def close() -> None:
@@ -198,25 +199,27 @@ class StigGenerator:
         return -1
 
     @staticmethod
-    def __save_modified_zip(customProfile: Profile, input: str, output: str, xmlOutput: str) -> None:
+    def __save_modified_zip(customProfile: Profile, zipFilePath: str, outputDirectory: str, xmlOutput: str) -> None:
         # Read from zip
-        folderName, xccdfFileName = StigZip.extract_xccdf(input, output)
+        folderName, xccdfFileName = StigZip.extract_xccdf(
+            zipFilePath=zipFilePath, outputDirectory=outputDirectory)
 
         # Create XML
-        xmlInput: str = os.path.join(output, f"{folderName}/{xccdfFileName}")
+        xmlInput: str = os.path.join(
+            outputDirectory, f"{folderName}/{xccdfFileName}")
         StigGenerator.__generate_xml_file(
-            customProfile=customProfile, input=xmlInput, output=xmlOutput)
+            customProfile=customProfile, originalXmlFile=xmlInput, generatedXmlFile=xmlOutput)
 
         # Create new zip
 
-        StigZip.generate_stig_zip(
-            input, output, folderName, xccdfFileName, xmlOutput)
+        StigZip.generate_stig_zip(zipFilePath=zipFilePath, outputDirectory=outputDirectory,
+                                  folderInZip=folderName, xccdfFileInZip=xccdfFileName, modifiedXccdf=xmlOutput)
 
         # Cleanup
         # os.remove(xmlOutput)
 
     @staticmethod
-    def __generate_xml_file(customProfile: Profile, input: str, output: str) -> None:
+    def __generate_xml_file(customProfile: Profile, originalXmlFile: str, generatedXmlFile: str) -> None:
         # DevSkim: ignore DS137138
         ET.register_namespace('', 'http://checklists.nist.gov/xccdf/1.1')
         # DevSkim: ignore DS137138
@@ -231,23 +234,23 @@ class StigGenerator:
             'xsi', 'http://www.w3.org/2001/XMLSchema-instance')  # DevSkim: ignore DS137138
 
         customProfileXml: ET.Element = StigGenerator.__generate_profile_xml(
-            customProfile)
-        tree: ET.ElementTree = ET.parse(input)
+            customProfile=customProfile)
+        tree: ET.ElementTree = ET.parse(originalXmlFile)
         root: ET.Element = tree.getroot()
-        index: int = StigGenerator.__get_profile_index(root)
+        index: int = StigGenerator.__get_profile_index(root=root)
         root.insert(index, customProfileXml)
         ET.indent(tree)
 
-        tree.write(output)
+        tree.write(generatedXmlFile)
 
     @staticmethod
-    def __save_rationale_xml(profileName: str, preferences: list[Preference], output: str) -> None:
+    def __save_rationale_xml(profileName: str, preferences: list[Preference], outputDirectory: str) -> None:
         rejected: list[Preference] = [
             p for p in preferences if p.applicable == False]
 
         attrs: dict = {}
         attrs["profile"] = profileName
-        root: ET.Element = ET.Element("rationale", attrib=attrs)
+        root: ET.Element = ET.Element("rationale", attrs)
         for r in rejected:
             attrs = {}
             attrs["rule"] = r.id
@@ -256,22 +259,22 @@ class StigGenerator:
             rationaleElement: ET.Element = ET.Element("item", attrs)
             root.append(rationaleElement)
 
-        rationaleOutput: str = os.path.join(output, "rationale.xml")
+        rationaleOutput: str = os.path.join(outputDirectory, "rationale.xml")
         with open(rationaleOutput, "w") as file:
-            ET.indent(root)
-            xmlAsStr: str = ET.tostring(root, encoding="unicode")
+            ET.indent(tree=root)
+            xmlAsStr: str = ET.tostring(root, "unicode")
             file.write(xmlAsStr)
 
     @staticmethod
-    def __generate_profile_xml(custom: Profile) -> ET.Element:
+    def __generate_profile_xml(customProfile: Profile) -> ET.Element:
         id: dict = {}
-        id["id"] = custom.id.replace(" ", "_")
+        id["id"] = customProfile.id.replace(" ", "_")
         p: ET.Element = ET.Element("Profile", id)
         t: ET.Element = ET.SubElement(p, "title")
-        t.text = custom.title
+        t.text = customProfile.title
         d: ET.Element = ET.SubElement(p, "description")
-        d.text = custom.description
-        for s in custom.select:
+        d.text = customProfile.description
+        for s in customProfile.select:
             attr: dict = {}
             attr["idref"] = s.idref
             attr["selected"] = s.selected
@@ -281,14 +284,14 @@ class StigGenerator:
         return p
 
     @staticmethod
-    def __clear() -> None:
+    def __clear_console() -> None:
         if (sys.platform == "win32"):
             _: int = StigGenerator.__clear_win32()
         else:
             _: int = StigGenerator.__clear_unix()
 
     @staticmethod
-    def __clear_unix() -> int: return os.system('clear')
+    def __clear_unix() -> int: return os.system(command='clear')
 
     @staticmethod
-    def __clear_win32() -> int: return os.system('cls')
+    def __clear_win32() -> int: return os.system(command='cls')
