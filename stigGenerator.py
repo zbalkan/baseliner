@@ -46,6 +46,8 @@ class StigGenerator:
             # Save as checkpoint
             with open(CHECKPOINT_FILE, "a+", encoding=ENCODING) as file:
                 file.write(f"profile:{selected}\nlast:0\n")
+                os.chmod(CHECKPOINT_FILE, stat.S_IWRITE |
+                         stat.S_IWGRP | stat.S_IROTH)
 
             return benchmark.Profile[selected]
 
@@ -243,8 +245,8 @@ class StigGenerator:
         ET.indent(tree)
 
         tree.write(generated_xml_file)
-        os.chmod(generated_xml_file, stat.S_IRWXU |
-                 stat.S_IRWXG | stat.S_IROTH)
+        os.chmod(generated_xml_file, stat.S_IWRITE |
+                 stat.S_IWGRP | stat.S_IROTH)
 
     @staticmethod
     def __save_rationale_xml(profile_name: str, preferences: list[Preference], output_directory: str) -> None:
@@ -267,8 +269,8 @@ class StigGenerator:
             ET.indent(tree=root)
             xml_as_str: str = ET.tostring(root, "unicode")
             file.write(xml_as_str)
-            os.chmod(rationale_output, stat.S_IRWXU |
-                     stat.S_IRWXG | stat.S_IROTH)
+            os.chmod(rationale_output, stat.S_IWRITE |
+                     stat.S_IWGRP | stat.S_IROTH)
 
     @staticmethod
     def __generate_profile_xml(custom_profile: Profile) -> ET.Element:

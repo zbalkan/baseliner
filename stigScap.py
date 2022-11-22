@@ -42,24 +42,26 @@ class StigScap:
         # Create ARF result
         StigScap.__run_oscap_command(
             f"sudo oscap xccdf eval --fetch-remote-resources --profile {sanitized_profile_id} --results-arf {ARF_PATH} {temp_xml_file}")
-        os.chmod(temp_xml_file, stat.S_IRWXU | stat.S_IRWXG | stat.S_IROTH)
+        os.chmod(temp_xml_file, stat.S_IWRITE |
+                 stat.S_IWGRP | stat.S_IROTH)
 
         # Convert XCCDF 1.1 to 1.2 for reports
         StigScap.__run_oscap_command(
             f" xsltproc --stringparam reverse_DNS org.open-scap xccdf_1.1_to_1.2.xsl {temp_xml_file} > {temp_xml_file}.new")
-        os.chmod(f"{temp_xml_file}.new", stat.S_IRWXU |
-                 stat.S_IRWXG | stat.S_IROTH)
+        os.chmod(f"{temp_xml_file}.new", stat.S_IWRITE |
+                 stat.S_IWGRP | stat.S_IROTH)
 
         # Replace file
         StigScap.__run_oscap_command(
             f"rm {temp_xml_file}; mv {temp_xml_file}.new {temp_xml_file}")
-        os.chmod(temp_xml_file, stat.S_IRWXU | stat.S_IRWXG | stat.S_IROTH)
+        os.chmod(temp_xml_file, stat.S_IWRITE |
+                 stat.S_IWGRP | stat.S_IROTH)
 
         # Generate audit report
         StigScap.__run_oscap_command(
             f"sudo oscap xccdf eval --fetch-remote-resources --profile {sanitized_profile_id} --results-arf {ARF_PATH} --report {report_path} {temp_xml_file}")
-        os.chmod(f"{report_path}.html", stat.S_IRWXU |
-                 stat.S_IRWXG | stat.S_IROTH)
+        os.chmod(f"{report_path}.html", stat.S_IWRITE |
+                 stat.S_IWGRP | stat.S_IROTH)
 
         os.remove(ARF_PATH)
 
