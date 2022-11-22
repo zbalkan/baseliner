@@ -14,67 +14,67 @@ ENCODING: str = "utf-8"
 
 def main() -> None:
 
-    argParser: argparse.ArgumentParser = argparse.ArgumentParser(
+    arg_parser: argparse.ArgumentParser = argparse.ArgumentParser(
         description="Generate Custom STIG profile baseline of yor choice. Audit and remediate against your baseline.")
     if (len(sys.argv)) == 1:
-        argParser.print_help()
-    argParser.add_argument("-i", dest="in_path", type=str, required=True,
-                           help="Path to STIG Zip file")
-    argParser.add_argument("-o", dest="out_path", type=str, required=False,
-                           help="Directory for modified STIG Zip file (default: input directory)")
-    argParser.add_argument("-r", action="store_true",
-                           help="Generate audit report as HTML (requires OpenScap)")
-    argParser.add_argument("-s", action="store_true",
-                           help="Generate hardening script as Ansible playbook (requires OpenScap)")
+        arg_parser.print_help()
+    arg_parser.add_argument("-i", dest="in_path", type=str, required=True,
+                            help="Path to STIG Zip file")
+    arg_parser.add_argument("-o", dest="out_path", type=str, required=False,
+                            help="Directory for modified STIG Zip file (default: input directory)")
+    arg_parser.add_argument("-r", action="store_true",
+                            help="Generate audit report as HTML (requires OpenScap)")
+    arg_parser.add_argument("-s", action="store_true",
+                            help="Generate hardening script as Ansible playbook (requires OpenScap)")
 
-    args: argparse.Namespace = argParser.parse_args()
-    input: str = os.path.abspath(args.in_path)
-    if (input.endswith(".zip") == False):
+    args: argparse.Namespace = arg_parser.parse_args()
+    input_path: str = os.path.abspath(args.in_path)
+    if (input_path.endswith(".zip") is False):
         raise Exception("Invalid input parameter.")
 
     if (args.out_path is None):
-        output: str = os.path.dirname(input)  # Default value
+        output_path: str = os.path.dirname(input_path)  # Default value
     else:
-        output = os.path.abspath(args.out_path)
-    if (os.path.isdir(output) == False):
+        output_path = os.path.abspath(args.out_path)
+    if (os.path.isdir(output_path) is False):
         raise Exception("Invalid otput parameter.")
 
-    generateReport: bool = args.r
-    generateAnsible: bool = args.s
+    generate_report: bool = args.r
+    generate_ansible: bool = args.s
 
-    # if (generateAnsible or generateReport):
-    #     if (which("oscap") is None):
-    #         raise Exception("OpenScap is required to use this flag")
+    if (generate_ansible or generate_report):
+        if (which("oscap") is None):
+            raise Exception("OpenScap is required to use this flag")
 
-    stigParser: StigParser = StigParser.parseZip(zipFile=input)
-    benchmark: Benchmark = stigParser.Benchmark
+    stig_parser: StigParser = StigParser.parse_zip(zip_file=input_path)
+    benchmark: Benchmark = stig_parser.Benchmark
 
-    selectedProfile: Profile = StigGenerator.prompt_profile(
+    selected_profile: Profile = StigGenerator.prompt_profile(
         benchmark=benchmark)
-    selectedGroups: list[Group] = StigGenerator.filter_groups(
-        benchmark=benchmark, selectedProfile=selectedProfile)
+    selected_groups: list[Group] = StigGenerator.filter_groups(
+        benchmark=benchmark, selected_profile=selected_profile)
 
-    print(f"{len(selectedGroups)} rules selected out of {len(benchmark.Group)} by selecting profile \"{selectedProfile.title}\"")
+    print(f"{len(selected_groups)} rules selected out of {len(benchmark.Group)} by selecting profile \"{selected_profile.title}\"")
 
     preferences: list[Preference] = StigGenerator.prompt_preferences(
-        selectedGroups=selectedGroups)
+        selected_groups=selected_groups)
 
-    customProfile: Profile = StigGenerator.get_custom_profile(
+    custom_profile: Profile = StigGenerator.get_custom_profile(
         preferences=preferences)
 
-    tmpFile: str = os.path.join(output, f"{benchmark.id}.xml")
+    tmp_file: str = os.path.join(output_path, f"{benchmark.id}.xml")
 
     StigGenerator.generate_profile(
-        customProfile=customProfile, stigFile=input, outputDirectory=output, tmpXmlFile=tmpFile)
+        custom_profile=custom_profile, stig_file=input_path, output_directory=output_path, temp_xml_file=tmp_file)
     StigGenerator.generate_rationale(
-        customProfile=customProfile, preferences=preferences, outputDirectory=output)
+        custom_profile=custom_profile, preferences=preferences, output_directory=output_path)
 
-    if (generateReport):
+    if generate_report:
         StigGenerator.generate_report(
-            customProfile=customProfile, outputDirectory=output, tmpXmlFile=tmpFile)
-    if (generateAnsible):
+            custom_profile=custom_profile, output_directory=output_path, temp_xml_file=tmp_file)
+    if generate_ansible:
         StigGenerator.generate_fix(
-            customProfile=customProfile, outputDirectory=output, tmpXmlFile=tmpFile)
+            custom_profile=custom_profile, output_directory=output_path, temp_xml_file=tmp_file)
 
     StigGenerator.close()
 
