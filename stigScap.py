@@ -14,7 +14,7 @@ class StigScap:
     def generate_ansible(profileId: str, outputDirectory: str, benchmarkId: str) -> None:
         out: str = os.path.abspath(outputDirectory)
         sanitizedProfileId: str = profileId.replace(" ", "_")
-        fullPath: str = os.path.join(out, benchmarkId, ".xml")
+        fullPath: str = os.path.join(out, f"{benchmarkId}.xml")
 
         # Create ARF result
         StigScap.__run_oscap_command(
@@ -38,7 +38,7 @@ class StigScap:
     def generate_audit_report(profileId: str, outputDirectory: str, benchmarkId: str) -> None:
         out: str = os.path.abspath(outputDirectory)
         sanitizedProfileId: str = profileId.replace(" ", "_")
-        fullPath: str = os.path.join(out, benchmarkId, ".xml")
+        fullPath: str = os.path.join(out, f"{benchmarkId}.xml")
 
         # Create ARF result
         StigScap.__run_oscap_command(
