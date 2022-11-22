@@ -14,7 +14,8 @@ class StigScap:
     @staticmethod
     def generate_ansible(profile_id: str, output_directory: str, temp_xml_file: str) -> None:
         ansible_path: str = os.path.join(output_directory, f"{profile_id}.yml")
-        sanitized_profile_id: str = profile_id.replace(" ", "_")
+        sanitized_profile_id: str = profile_id.replace(
+            ".", "_").replace(" ", "_").replace("-", "_")
 
         # Create ARF result
         StigScap.__run_oscap_command(
@@ -37,7 +38,8 @@ class StigScap:
     @staticmethod
     def generate_audit_report(profile_id: str, output_directory: str, temp_xml_file: str) -> None:
         report_path: str = os.path.join(output_directory, f"{profile_id}.html")
-        sanitized_profile_id: str = profile_id.replace(" ", "_")
+        sanitized_profile_id: str = profile_id.replace(
+            ".", "_").replace(" ", "_").replace("-", "_")
 
         # Create ARF result
         StigScap.__run_oscap_command(
