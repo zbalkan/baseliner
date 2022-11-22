@@ -23,7 +23,7 @@ def is_tool(name):
 def main() -> None:
 
     argParser: argparse.ArgumentParser = argparse.ArgumentParser(
-        description="Generate Custom STIG profile for baseline.")
+        description="Generate Custom STIG profile baseline of yor choice. Audit and remediate against your baseline.")
     if (len(sys.argv)) == 1:
         argParser.print_help()
     argParser.add_argument("-i", dest="in_path", type=str, required=True,
