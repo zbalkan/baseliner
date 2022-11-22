@@ -15,11 +15,22 @@ class StigScap:
         out: str = os.path.abspath(outputDirectory)
         fileName: str = name.replace(" ", "_")
         fullPath: str = os.path.join(out, fileName)
-        command: str = f"sudo oscap xccdf eval --fetch-remote-resources --profile xccdf_org.ssgproject.content_profile_stig --results-arf {ARF_PATH} {customXccdf}"
-        StigScap.__run_oscap_command(command)
 
-        command = f"sudo oscap xccdf generate fix --fetch-remote-resources --fix-type ansible --result-id \"\" {ARF_PATH} > {fullPath}.yml"
-        StigScap.__run_oscap_command(command)
+        # Create ARF result
+        StigScap.__run_oscap_command(
+            f"sudo oscap xccdf eval --fetch-remote-resources --profile {fileName} --results-arf {ARF_PATH} {customXccdf}")
+
+        # Convert XCCDF 1.1 to 1.2 for reports
+        StigScap.__run_oscap_command(
+            f" xsltproc --stringparam reverse_DNS org.open-scap xccdf_1.1_to_1.2.xsl {customXccdf} > {customXccdf}.new")
+
+        # Replace file
+        StigScap.__run_oscap_command(
+            f"rm {customXccdf}; mv {customXccdf}.new {customXccdf}")
+
+        # Generate ansible script
+        StigScap.__run_oscap_command(
+            f"sudo oscap xccdf generate fix --fetch-remote-resources --fix-type ansible --result-id \"\" {ARF_PATH} > {fullPath}.yml")
 
         os.remove(ARF_PATH)
 
@@ -28,28 +39,39 @@ class StigScap:
         out: str = os.path.abspath(outputDirectory)
         fileName: str = name.replace(" ", "_")
         fullPath: str = os.path.join(out, fileName)
-        command: str = f"sudo oscap xccdf eval --fetch-remote-resources --profile xccdf_org.ssgproject.content_profile_stig --results-arf {ARF_PATH} {customXccdf}"
-        StigScap.__run_oscap_command(command)
 
-        command = f"sudo oscap xccdf eval --fetch-remote-resources --profile xccdf_org.ssgproject.content_profile_stig --results-arf {ARF_PATH} --report {fullPath}.html {customXccdf}"
-        StigScap.__run_oscap_command(command)
+        # Create ARF result
+        StigScap.__run_oscap_command(
+            f"sudo oscap xccdf eval --fetch-remote-resources --profile {fileName} --results-arf {ARF_PATH} {customXccdf}")
+
+        # Convert XCCDF 1.1 to 1.2 for reports
+        StigScap.__run_oscap_command(
+            f" xsltproc --stringparam reverse_DNS org.open-scap xccdf_1.1_to_1.2.xsl {customXccdf} > {customXccdf}.new")
+
+        # Replace file
+        StigScap.__run_oscap_command(
+            f"rm {customXccdf}; mv {customXccdf}.new {customXccdf}")
+
+        # Generate audit report
+        StigScap.__run_oscap_command(
+            f"sudo oscap xccdf eval --fetch-remote-resources --profile {fileName}--results-arf {ARF_PATH} --report {fullPath}.html {customXccdf}")
 
         os.remove(ARF_PATH)
 
     @staticmethod
-    def __run_oscap_command(command) -> None:
+    def __run_oscap_command(command: str) -> None:
         output: Optional[bytes] = None
         try:
             output = subprocess.check_output(command.split(" "))
         except Exception as ex:
-            StigScap.__raise_oscap_exception(output=output, ex=ex)
+            StigScap.__raise_command_exception(output=output, ex=ex)
 
     @staticmethod
-    def __raise_oscap_exception(output: Optional[bytes], ex: Exception) -> None:
+    def __raise_command_exception(output: Optional[bytes], ex: Exception) -> None:
         if (output):
             err: str = bytes.decode(output, ENCODING)
             raise Exception(
-                f"Oscap failed:\n{err}", str(ex))
+                f"Command failed:\n{err}", str(ex))
         else:
             raise Exception(
-                f"Oscap failed.", str(ex))
+                f"Command failed.", str(ex))
