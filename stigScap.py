@@ -18,15 +18,15 @@ class StigScap:
 
         # Create ARF result
         StigScap.__run_oscap_command(
-            f"sudo oscap xccdf eval --fetch-remote-resources --profile {fileName} --results-arf {ARF_PATH} {customXccdf}")
+            f"sudo oscap xccdf eval --fetch-remote-resources --profile {fileName} --results-arf {ARF_PATH} {fileName}")
 
         # Convert XCCDF 1.1 to 1.2 for reports
         StigScap.__run_oscap_command(
-            f" xsltproc --stringparam reverse_DNS org.open-scap xccdf_1.1_to_1.2.xsl {customXccdf} > {customXccdf}.new")
+            f" xsltproc --stringparam reverse_DNS org.open-scap xccdf_1.1_to_1.2.xsl {fileName} > {fileName}.new")
 
         # Replace file
         StigScap.__run_oscap_command(
-            f"rm {customXccdf}; mv {customXccdf}.new {customXccdf}")
+            f"rm {fileName}; mv {fileName}.new {fileName}")
 
         # Generate ansible script
         StigScap.__run_oscap_command(
@@ -42,19 +42,19 @@ class StigScap:
 
         # Create ARF result
         StigScap.__run_oscap_command(
-            f"sudo oscap xccdf eval --fetch-remote-resources --profile {fileName} --results-arf {ARF_PATH} {customXccdf}")
+            f"sudo oscap xccdf eval --fetch-remote-resources --profile {fileName} --results-arf {ARF_PATH} {fileName}")
 
         # Convert XCCDF 1.1 to 1.2 for reports
         StigScap.__run_oscap_command(
-            f" xsltproc --stringparam reverse_DNS org.open-scap xccdf_1.1_to_1.2.xsl {customXccdf} > {customXccdf}.new")
+            f" xsltproc --stringparam reverse_DNS org.open-scap xccdf_1.1_to_1.2.xsl {customXccdf} > {fileName}.new")
 
         # Replace file
         StigScap.__run_oscap_command(
-            f"rm {customXccdf}; mv {customXccdf}.new {customXccdf}")
+            f"rm {fileName}; mv {fileName}.new {fileName}")
 
         # Generate audit report
         StigScap.__run_oscap_command(
-            f"sudo oscap xccdf eval --fetch-remote-resources --profile {fileName}--results-arf {ARF_PATH} --report {fullPath}.html {customXccdf}")
+            f"sudo oscap xccdf eval --fetch-remote-resources --profile {fileName}--results-arf {ARF_PATH} --report {fullPath}.html {fileName}")
 
         os.remove(ARF_PATH)
 
