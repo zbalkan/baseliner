@@ -191,6 +191,7 @@ class StigGenerator:
     @staticmethod
     def close() -> None:
         os.remove(CHECKPOINT_FILE)
+        os.remove(CUSTOM_XCCDF_FILE)
 
     @staticmethod
     def __get_profile_index(root: ET.Element) -> int:
@@ -231,7 +232,6 @@ class StigGenerator:
             input, output, folderName, xccdfFileName, CUSTOM_XCCDF_FILE)
 
         # Cleanup
-        os.remove(CUSTOM_XCCDF_FILE)
         os.remove(f"{folderName}/{xccdfFileName}")
         os.removedirs(folderName)
 
