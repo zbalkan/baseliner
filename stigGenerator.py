@@ -267,7 +267,7 @@ class StigGenerator:
             ET.indent(tree=root)
             xml_as_str: str = ET.tostring(root, "unicode")
             file.write(xml_as_str)
-            os.chmod(xml_as_str, stat.S_IRWXU |
+            os.chmod(rationale_output, stat.S_IRWXU |
                      stat.S_IRWXG | stat.S_IROTH)
 
     @staticmethod

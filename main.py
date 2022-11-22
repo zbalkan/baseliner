@@ -28,15 +28,15 @@ def main() -> None:
                             help="Generate hardening script as Ansible playbook (requires OpenScap)")
 
     args: argparse.Namespace = arg_parser.parse_args()
-    input_path: str = os.path.abspath(args.in_path)
-    if (input_path.endswith(".zip") is False):
+    stig_file: str = os.path.abspath(args.in_path)
+    if (stig_file.endswith(".zip") is False):
         raise Exception("Invalid input parameter.")
 
     if (args.out_path is None):
-        output_path: str = os.path.dirname(input_path)  # Default value
+        output_dir: str = os.path.dirname(stig_file)  # Default value
     else:
-        output_path = os.path.abspath(args.out_path)
-    if (os.path.isdir(output_path) is False):
+        output_dir = os.path.abspath(args.out_path)
+    if (os.path.isdir(output_dir) is False):
         raise Exception("Invalid otput parameter.")
 
     generate_report: bool = args.r
@@ -46,7 +46,7 @@ def main() -> None:
         if (which("oscap") is None):
             raise Exception("OpenScap is required to use this flag")
 
-    stig_parser: StigParser = StigParser.parse_zip(zip_file=input_path)
+    stig_parser: StigParser = StigParser.parse_zip(zip_file=stig_file)
     benchmark: Benchmark = stig_parser.Benchmark
 
     selected_profile: Profile = StigGenerator.prompt_profile(
@@ -62,19 +62,19 @@ def main() -> None:
     custom_profile: Profile = StigGenerator.get_custom_profile(
         preferences=preferences)
 
-    tmp_file: str = os.path.join(output_path, f"{benchmark.id}.xml")
+    tmp_file: str = os.path.join(output_dir, f"{benchmark.id}.xml")
 
     StigGenerator.generate_profile(
-        custom_profile=custom_profile, stig_file=input_path, output_directory=output_path, temp_xml_file=tmp_file)
+        custom_profile=custom_profile, stig_file=stig_file, output_directory=output_dir, temp_xml_file=tmp_file)
     StigGenerator.generate_rationale(
-        custom_profile=custom_profile, preferences=preferences, output_directory=output_path)
+        custom_profile=custom_profile, preferences=preferences, output_directory=output_dir)
 
     if generate_report:
         StigGenerator.generate_report(
-            custom_profile=custom_profile, output_directory=output_path, temp_xml_file=tmp_file)
+            custom_profile=custom_profile, output_directory=output_dir, temp_xml_file=tmp_file)
     if generate_ansible:
         StigGenerator.generate_fix(
-            custom_profile=custom_profile, output_directory=output_path, temp_xml_file=tmp_file)
+            custom_profile=custom_profile, output_directory=output_dir, temp_xml_file=tmp_file)
 
     StigGenerator.close()
 
