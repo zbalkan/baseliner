@@ -30,7 +30,7 @@ class StigZip:
             "_STIG", "-xccdf.xml").replace("_V1R6", "_STIG_V1R6")
         archive.extract(f"{folderName}/{xccdfFileName}")
         archive.close()
-        return folderName, xccdfFileName
+        return folderName, xccdfFileName # TODO: Change extract path
 
     @staticmethod
     def generate_stig_zip(zipFilePath: str, outputDirectory: str, folderInZip: str, xccdfFileInZip: str, modifiedXccdf: str) -> None:
