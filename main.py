@@ -56,19 +56,22 @@ def main() -> None:
     print(f"{len(selectedGroups)} rules selected out of {len(benchmark.Group)} by selecting profile \"{selectedProfile.title}\"")
 
     preferences: list[Preference] = StigGenerator.prompt_preferences(
-        selectedGroups)
+        selectedGroups=selectedGroups)
 
     customProfile: Profile = StigGenerator.get_custom_profile(preferences)
+
+    tmpFile: str = os.path.join(output, f"{benchmark.id}.xml")
     StigGenerator.generate_profile(
-        customProfile=customProfile, input=input, output=output, benchmarkId=benchmark.id)
-    StigGenerator.generate_rationale(customProfile, preferences, output)
+        customProfile=customProfile, input=input, output=output, tmpXmlFile=tmpFile)
+    StigGenerator.generate_rationale(
+        customProfile=customProfile, preferences=preferences, output=output)
 
     if (generateReport):
         StigGenerator.generate_report(
-            customProfile=customProfile, output=output, benchmarkId=benchmark.id)
+            customProfile=customProfile, output=output, tmpXmlFile=tmpFile)
     if (generateAnsible):
         StigGenerator.generate_fix(
-            customProfile=customProfile, output=output, benchmarkId=benchmark.id)
+            customProfile=customProfile, output=output, tmpXmlFile=tmpFile)
 
     StigGenerator.close()
 

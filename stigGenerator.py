@@ -166,9 +166,9 @@ class StigGenerator:
         return custom
 
     @staticmethod
-    def generate_profile(customProfile: Profile, input: str, output: str, benchmarkId: str) -> None:
+    def generate_profile(customProfile: Profile, input: str, output: str, tmpXmlFile: str) -> None:
         StigGenerator.__save_modified_zip(
-            customProfile, input, output, benchmarkId)
+            customProfile=customProfile, input=input, output=output, xmlOutput=tmpXmlFile)
 
     @staticmethod
     def generate_rationale(customProfile: Profile, preferences: list[Preference], output: str) -> None:
@@ -176,14 +176,14 @@ class StigGenerator:
             customProfile.title, preferences, output)
 
     @staticmethod
-    def generate_fix(customProfile: Profile, output: str, benchmarkId: str) -> None:
+    def generate_fix(customProfile: Profile, output: str, tmpXmlFile: str) -> None:
         StigScap.generate_ansible(
-            profileId=customProfile.id, outputDirectory=output, benchmarkId=benchmarkId)
+            profileId=customProfile.id, outputDirectory=output, tmpXmlFile=tmpXmlFile)
 
     @staticmethod
-    def generate_report(customProfile: Profile, output: str, benchmarkId: str) -> None:
+    def generate_report(customProfile: Profile, output: str, tmpXmlFile: str) -> None:
         StigScap.generate_audit_report(
-            profileId=customProfile.id, outputDirectory=output, benchmarkId=benchmarkId)
+            profileId=customProfile.id, outputDirectory=output, tmpXmlFile=tmpXmlFile)
 
     @staticmethod
     def close() -> None:
@@ -198,13 +198,12 @@ class StigGenerator:
         return -1
 
     @staticmethod
-    def __save_modified_zip(customProfile: Profile, input: str, output: str, benchmarkId: str) -> None:
+    def __save_modified_zip(customProfile: Profile, input: str, output: str, xmlOutput: str) -> None:
         # Read from zip
         folderName, xccdfFileName = StigZip.extract_xccdf(input, output)
 
         # Create XML
         xmlInput: str = os.path.join(output, f"{folderName}/{xccdfFileName}")
-        xmlOutput: str = os.path.join(output, f"{benchmarkId}.xml")
         StigGenerator.__generate_xml_file(
             customProfile=customProfile, input=xmlInput, output=xmlOutput)
 
@@ -238,7 +237,8 @@ class StigGenerator:
         index: int = StigGenerator.__get_profile_index(root)
         root.insert(index, customProfileXml)
         ET.indent(tree)
-        tree.write(f"{customProfile.id}.xml")
+
+        tree.write(output)
 
     @staticmethod
     def __save_rationale_xml(profileName: str, preferences: list[Preference], output: str) -> None:

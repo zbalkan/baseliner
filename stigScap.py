@@ -11,50 +11,48 @@ ENCODING: str = "utf-8"
 class StigScap:
 
     @staticmethod
-    def generate_ansible(profileId: str, outputDirectory: str, benchmarkId: str) -> None:
+    def generate_ansible(profileId: str, outputDirectory: str, tmpXmlFile: str) -> None:
         out: str = os.path.abspath(outputDirectory)
         sanitizedProfileId: str = profileId.replace(" ", "_")
-        fullPath: str = os.path.join(out, f"{benchmarkId}.xml")
 
         # Create ARF result
         StigScap.__run_oscap_command(
-            f"sudo oscap xccdf eval --fetch-remote-resources --profile {sanitizedProfileId} --results-arf {ARF_PATH} {fullPath}")
+            f"sudo oscap xccdf eval --fetch-remote-resources --profile {sanitizedProfileId} --results-arf {ARF_PATH} {tmpXmlFile}")
 
         # Convert XCCDF 1.1 to 1.2 for reports
         StigScap.__run_oscap_command(
-            f" xsltproc --stringparam reverse_DNS org.open-scap xccdf_1.1_to_1.2.xsl {fullPath} > {fullPath}.new")
+            f" xsltproc --stringparam reverse_DNS org.open-scap xccdf_1.1_to_1.2.xsl {tmpXmlFile} > {tmpXmlFile}.new")
 
         # Replace file
         StigScap.__run_oscap_command(
-            f"rm {fullPath}; mv {fullPath}.new {fullPath}")
+            f"rm {tmpXmlFile}; mv {tmpXmlFile}.new {tmpXmlFile}")
 
         # Generate ansible script
         StigScap.__run_oscap_command(
-            f"sudo oscap xccdf generate fix --fetch-remote-resources --fix-type ansible --result-id \"\" {ARF_PATH} > {fullPath}.yml")
+            f"sudo oscap xccdf generate fix --fetch-remote-resources --fix-type ansible --result-id \"\" {ARF_PATH} > {tmpXmlFile}.yml")
 
         os.remove(ARF_PATH)
 
     @staticmethod
-    def generate_audit_report(profileId: str, outputDirectory: str, benchmarkId: str) -> None:
+    def generate_audit_report(profileId: str, outputDirectory: str, tmpXmlFile: str) -> None:
         out: str = os.path.abspath(outputDirectory)
         sanitizedProfileId: str = profileId.replace(" ", "_")
-        fullPath: str = os.path.join(out, f"{benchmarkId}.xml")
 
         # Create ARF result
         StigScap.__run_oscap_command(
-            f"sudo oscap xccdf eval --fetch-remote-resources --profile {sanitizedProfileId} --results-arf {ARF_PATH} {fullPath}")
+            f"sudo oscap xccdf eval --fetch-remote-resources --profile {sanitizedProfileId} --results-arf {ARF_PATH} {tmpXmlFile}")
 
         # Convert XCCDF 1.1 to 1.2 for reports
         StigScap.__run_oscap_command(
-            f" xsltproc --stringparam reverse_DNS org.open-scap xccdf_1.1_to_1.2.xsl {fullPath} > {fullPath}.new")
+            f" xsltproc --stringparam reverse_DNS org.open-scap xccdf_1.1_to_1.2.xsl {tmpXmlFile} > {tmpXmlFile}.new")
 
         # Replace file
         StigScap.__run_oscap_command(
-            f"rm {fullPath}; mv {fullPath}.new {fullPath}")
+            f"rm {tmpXmlFile}; mv {tmpXmlFile}.new {tmpXmlFile}")
 
         # Generate audit report
         StigScap.__run_oscap_command(
-            f"sudo oscap xccdf eval --fetch-remote-resources --profile {sanitizedProfileId} --results-arf {ARF_PATH} --report {fullPath}.html {fullPath}")
+            f"sudo oscap xccdf eval --fetch-remote-resources --profile {sanitizedProfileId} --results-arf {ARF_PATH} --report {tmpXmlFile}.html {tmpXmlFile}")
 
         os.remove(ARF_PATH)
 
