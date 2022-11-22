@@ -6,10 +6,13 @@ import xml.etree.ElementTree as ET
 from colorama import Fore, Style
 
 from stigParser import Benchmark, Group, Preference, Profile, Select
+from stigScap import StigScap
 from stigZip import StigZip
 
 CHECKPOINT_FILE: str = os.path.join(os.path.dirname(
     os.path.realpath(__file__)), "checkpoint.tmp")
+
+CUSTOM_XCCDF_FILE: str = "/tmp/modified.xml"
 
 ENCODING: str = "UTF-8"
 
@@ -176,6 +179,16 @@ class StigGenerator:
             customProfile.title, preferences, output)
 
     @staticmethod
+    def generate_fix(customProfile: Profile, output: str) -> None:
+        StigScap.generate_ansible(
+            customXccdf=CUSTOM_XCCDF_FILE, outputDirectory=output, name=customProfile.title)
+
+    @staticmethod
+    def generate_report(customProfile: Profile, output: str) -> None:
+        StigScap.generate_audit_report(
+            customXccdf=CUSTOM_XCCDF_FILE, outputDirectory=output, name=customProfile.title)
+
+    @staticmethod
     def close() -> None:
         os.remove(CHECKPOINT_FILE)
 
@@ -211,15 +224,14 @@ class StigGenerator:
         index: int = StigGenerator.__get_profile_index(root)
         root.insert(index, customProfileXml)
         ET.indent(tree)
-        tmp: str = os.path.join(output, "modified.xml")
-        tree.write(tmp)
+        tree.write(CUSTOM_XCCDF_FILE)
 
         # Create new zip
         StigZip.generate_stig_zip(
-            input, output, folderName, xccdfFileName, tmp)
+            input, output, folderName, xccdfFileName, CUSTOM_XCCDF_FILE)
 
         # Cleanup
-        os.remove(tmp)
+        os.remove(CUSTOM_XCCDF_FILE)
         os.remove(f"{folderName}/{xccdfFileName}")
         os.removedirs(folderName)
 

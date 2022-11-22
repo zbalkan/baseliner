@@ -4,11 +4,20 @@
 import argparse
 import os
 import sys
+from shutil import which
 
 from stigGenerator import StigGenerator
 from stigParser import Benchmark, Group, Preference, Profile, StigParser
 
 ENCODING: str = "utf-8"
+
+
+def is_tool(name):
+    """Check whether `name` is on PATH and marked as executable."""
+
+    # from whichcraft import which
+
+    return which(name) is not None
 
 
 def main() -> None:
@@ -21,19 +30,29 @@ def main() -> None:
                            help="Path to STIG Zip file")
     argParser.add_argument("-o", dest="out_path", type=str, required=False,
                            help="Directory for modified STIG Zip file (default: input directory)")
+    argParser.add_argument("-r", action="store_true",
+                           help="Generate audit report as HTML (requires OpenScap)")
+    argParser.add_argument("-s", action="store_true",
+                           help="Generate hardening script as Ansible playbook (requires OpenScap)")
 
     args: argparse.Namespace = argParser.parse_args()
     input: str = os.path.abspath(args.in_path)
+    if (input.endswith(".zip") == False):
+        raise Exception("Invalid input parameter.")
+
     if (args.out_path is None):
         output: str = os.path.dirname(input)  # Default value
     else:
         output = os.path.abspath(args.out_path)
-
-    if (input.endswith(".zip") == False):
-        raise Exception("Invalid input parameter.")
-
     if (os.path.isdir(output) == False):
         raise Exception("Invalid otput parameter.")
+
+    generateReport: bool = args.r
+    generateAnsible: bool = args.s
+
+    if (generateAnsible or generateReport):
+        if (which("oscap") is None):
+            raise Exception("OpenScap is required to use this flag")
 
     stigParser: StigParser = StigParser.parseZip(input)
     benchmark: Benchmark = stigParser.Benchmark
@@ -50,6 +69,13 @@ def main() -> None:
     customProfile: Profile = StigGenerator.get_custom_profile(preferences)
     StigGenerator.generate_profile(customProfile, input, output)
     StigGenerator.generate_rationale(customProfile, preferences, output)
+
+    if (generateReport):
+        StigGenerator.generate_report(
+            customProfile=customProfile, output=output)
+    if (generateAnsible):
+        StigGenerator.generate_fix(customProfile=customProfile, output=output)
+
     StigGenerator.close()
 
     print("Completed.")
