@@ -13,43 +13,51 @@ ENCODING: str = "utf-8"
 
 def main() -> None:
 
-    argParser: argparse.ArgumentParser = argparse.ArgumentParser(
-        description="Generate Custom STIG profile for baseline.")
+    arg_parser: argparse.ArgumentParser = argparse.ArgumentParser(
+        description="Generate Custom STIG profile baseline of yor choice.")
     if (len(sys.argv)) == 1:
-        argParser.print_help()
-    argParser.add_argument("-i", dest="in_path", type=str, required=True,
-                           help="Path to STIG Zip file")
-    argParser.add_argument("-o", dest="out_path", type=str, required=False,
-                           help="Directory for modified STIG Zip file (default: input directory)")
+        arg_parser.print_help()
+    arg_parser.add_argument("-i", dest="in_path", type=str, required=True,
+                            help="Path to STIG Zip file")
+    arg_parser.add_argument("-o", dest="out_path", type=str, required=False,
+                            help="Directory for modified STIG Zip file (default: input directory)")
 
-    args: argparse.Namespace = argParser.parse_args()
-    input: str = os.path.abspath(args.in_path)
-    if (args.out_path is None):
-        output: str = os.path.dirname(input)  # Default value
-    else:
-        output = os.path.abspath(args.out_path)
-
-    if (input.endswith(".zip") == False):
+    args: argparse.Namespace = arg_parser.parse_args()
+    stig_file: str = os.path.abspath(args.in_path)
+    if (stig_file.endswith(".zip") is False):
         raise Exception("Invalid input parameter.")
 
-    if (os.path.isdir(output) == False):
+    if (args.out_path is None):
+        output_dir: str = os.path.dirname(stig_file)  # Default value
+    else:
+        output_dir = os.path.abspath(args.out_path)
+    if (os.path.isdir(output_dir) is False):
         raise Exception("Invalid otput parameter.")
 
-    stigParser: StigParser = StigParser.parseZip(input)
-    benchmark: Benchmark = stigParser.Benchmark
+    stig_parser: StigParser = StigParser.parse_zip(zip_file=stig_file)
+    benchmark: Benchmark = stig_parser.Benchmark
 
-    selectedProfile: Profile = StigGenerator.prompt_profile(benchmark)
-    selectedGroups: list[Group] = StigGenerator.filter_groups(
-        benchmark, selectedProfile)
+    selected_profile: Profile = StigGenerator.prompt_profile(
+        benchmark=benchmark)
+    selected_groups: list[Group] = StigGenerator.filter_groups(
+        benchmark=benchmark, selected_profile=selected_profile)
 
-    print(f"{len(selectedGroups)} rules selected out of {len(benchmark.Group)} by selecting profile \"{selectedProfile.title}\"")
+    print(f"{len(selected_groups)} rules selected out of {len(benchmark.Group)} by selecting profile \"{selected_profile.title}\"")
 
     preferences: list[Preference] = StigGenerator.prompt_preferences(
-        selectedGroups)
+        selected_groups=selected_groups)
 
-    customProfile: Profile = StigGenerator.get_custom_profile(preferences)
-    StigGenerator.generate_profile(customProfile, input, output)
-    StigGenerator.generate_rationale(customProfile, preferences, output)
+    custom_profile: Profile = StigGenerator.get_custom_profile(
+        preferences=preferences)
+
+    sanitized_file_name: str = benchmark.id.replace(" ", "_").replace("-", ".")
+    tmp_file: str = os.path.join(output_dir, f"{sanitized_file_name}.xml")
+
+    StigGenerator.generate_profile(
+        custom_profile=custom_profile, stig_file=stig_file, output_directory=output_dir, temp_xml_file=tmp_file)
+    StigGenerator.generate_rationale(
+        custom_profile=custom_profile, preferences=preferences, output_directory=output_dir)
+
     StigGenerator.close()
 
     print("Completed.")

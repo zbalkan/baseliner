@@ -17,6 +17,7 @@ class Benchmark:
     status: 'Status'
     title: str
     version: str
+    id: str
 
     @staticmethod
     def from_dict(obj: Any) -> 'Benchmark':
@@ -29,49 +30,50 @@ class Benchmark:
         _status: Status = Status.from_dict(obj.get("status"))
         _title: str = str(obj.get("title"))
         _version: str = str(obj.get("version"))
-        return Benchmark(_Group, _Profile, _description, _plain_text, _status, _title, _version)
+        _id: str = str(obj.get("@id"))
+        return Benchmark(_Group, _Profile, _description, _plain_text, _status, _title, _version, _id)
 
 
-@dataclass
+@ dataclass
 class Check:
     check_content: str
 
-    @staticmethod
+    @ staticmethod
     def from_dict(obj: Any) -> 'Check':
         _check_content: str = str(obj.get("check-content"))
         return Check(_check_content)
 
 
-@dataclass
+@ dataclass
 class Fix:
     id: str
 
-    @staticmethod
+    @ staticmethod
     def from_dict(obj: Any) -> 'Fix':
         _id: str = str(obj.get("@id"))
         return Fix(_id)
 
 
-@dataclass
+@ dataclass
 class Fixtext:
     text: str
     fixref: str
 
-    @staticmethod
+    @ staticmethod
     def from_dict(obj: Any) -> 'Fixtext':
         _text: str = str(obj.get("#text"))
         _fixref: str = str(obj.get("@fixref"))
         return Fixtext(_text, _fixref)
 
 
-@dataclass
+@ dataclass
 class Group:
     id: str
     Rule: 'Rule'
     description: str
     title: str
 
-    @staticmethod
+    @ staticmethod
     def from_dict(obj: Any) -> 'Group':
         _id: str = str(obj.get("@id"))
         _Rule: Rule = Rule.from_dict(obj.get("Rule"))
@@ -80,26 +82,26 @@ class Group:
         return Group(_id, _Rule, _description, _title)
 
 
-@dataclass
+@ dataclass
 class PlainText:
     text: str
     id: str
 
-    @staticmethod
+    @ staticmethod
     def from_dict(obj: Any) -> 'PlainText':
         _text: str = str(obj.get("#text"))
         _id: str = str(obj.get("@id"))
         return PlainText(_text, _id)
 
 
-@dataclass
+@ dataclass
 class Profile:
     id: str
     description: str
     select: List['Select']
     title: str
 
-    @staticmethod
+    @ staticmethod
     def from_dict(obj: Any) -> 'Profile':
         _id: str = str(obj.get("@id"))
         _description: str = str(obj.get("description"))
@@ -109,7 +111,7 @@ class Profile:
         return Profile(_id, _description, _select, _title)
 
 
-@dataclass
+@ dataclass
 class Rule:
     id: str
     severity: str
@@ -121,7 +123,7 @@ class Rule:
     title: str
     version: str
 
-    @staticmethod
+    @ staticmethod
     def from_dict(obj: Any) -> 'Rule':
         _id: str = str(obj.get("@id"))
         _severity: str = str(obj.get("@severity"))
@@ -135,38 +137,38 @@ class Rule:
         return Rule(_id, _severity, _weight, _check, _description, _fix, _fixtext, _title, _version)
 
 
-@dataclass
+@ dataclass
 class Select:
     idref: str
     selected: str
 
-    @staticmethod
+    @ staticmethod
     def from_dict(obj: Any) -> 'Select':
         _idref: str = str(obj.get("@idref"))
         _selected: str = str(obj.get("@selected"))
         return Select(_idref, _selected)
 
 
-@dataclass
+@ dataclass
 class Status:
     text: str
     date: str
 
-    @staticmethod
+    @ staticmethod
     def from_dict(obj: Any) -> 'Status':
         _text: str = str(obj.get("#text"))
         _date: str = str(obj.get("@date"))
         return Status(_text, _date)
 
 
-@dataclass
+@ dataclass
 class Preference:
     id: str
     rule: str
     applicable: bool
     rationale: Optional[str] = None
 
-    @staticmethod
+    @ staticmethod
     def from_dict(obj: Any) -> 'Preference':
         _id: str = str(obj.get("id"))
         _rule: str = str(obj.get("rule"))
@@ -175,24 +177,24 @@ class Preference:
         return Preference(_id, _rule, _applicable, _rationale)
 
 
-@dataclass
+@ dataclass
 class StigParser:
     Benchmark: Benchmark
 
-    @staticmethod
+    @ staticmethod
     def from_dict(obj: Any) -> 'StigParser':
         _Benchmark: Benchmark = Benchmark.from_dict(obj.get("Benchmark"))
         return StigParser(_Benchmark)
 
-    @staticmethod
-    def parseXccdf(input: str) -> 'StigParser':
-        with open(input, "r", encoding=ENCODING) as file:
-            xmlAsDict: OrderedDict[str, Any] = xmltodict.parse(file.read())
-        return StigParser.from_dict(xmlAsDict)
+    @ staticmethod
+    def parse_xccdf(xml_file: str) -> 'StigParser':
+        with open(xml_file, "r", encoding=ENCODING) as file:
+            xml_as_dict: OrderedDict[str, Any] = xmltodict.parse(file.read())
+        return StigParser.from_dict(xml_as_dict)
 
-    @staticmethod
-    def parseZip(input: str) -> 'StigParser':
-        fileAsBytes = StigZip.read_xccdf(input)
-        xmlAsDict: OrderedDict[str, Any] = xmltodict.parse(
-            fileAsBytes, encoding=ENCODING)
-        return StigParser.from_dict(xmlAsDict)
+    @ staticmethod
+    def parse_zip(zip_file: str) -> 'StigParser':
+        file_as_bytes: bytes = StigZip.read_xccdf(zip_file_path=zip_file)
+        xml_as_dict: OrderedDict[str, Any] = xmltodict.parse(
+            file_as_bytes, encoding=ENCODING)
+        return StigParser.from_dict(obj=xml_as_dict)
