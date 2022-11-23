@@ -11,14 +11,14 @@ class StigZip:
     @staticmethod
     def read_xccdf(zip_file_path: str) -> bytes:
         archive: ZipFile = ZipFile(zip_file_path, 'r')
-        baseFileName: str = os.path.basename(zip_file_path)
-        folderName: str = baseFileName.replace(
+        base_file_name: str = os.path.basename(zip_file_path)
+        folder_name: str = base_file_name.replace(
             "_STIG", "_Manual_STIG").removesuffix(".zip")
-        xccdfFileName: str = folderName.replace(
+        xccdf_file_name: str = folder_name.replace(
             "_STIG", "-xccdf.xml").replace("_V1R6", "_STIG_V1R6")
-        fileAsBytes: bytes = archive.read(f"{folderName}/{xccdfFileName}")
+        file_as_bytes: bytes = archive.read(f"{folder_name}/{xccdf_file_name}")
         archive.close()
-        return fileAsBytes
+        return file_as_bytes
 
     @staticmethod
     def extract_xccdf(zip_file_path: str, output_directory: str) -> tuple[str, str]:

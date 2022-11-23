@@ -172,7 +172,7 @@ class StigGenerator:
     @staticmethod
     def generate_profile(custom_profile: Profile, stig_file: str, output_directory: str, temp_xml_file: str) -> None:
         StigGenerator.__save_modified_zip(
-            custom_profile=custom_profile, zip_file_path=stig_file, outputDirectory=output_directory, xmlOutput=temp_xml_file)
+            custom_profile=custom_profile, zip_file_path=stig_file, output_directory=output_directory, xml_output=temp_xml_file)
 
     @staticmethod
     def generate_rationale(custom_profile: Profile, preferences: list[Preference], output_directory: str) -> None:
@@ -202,21 +202,21 @@ class StigGenerator:
         return -1
 
     @staticmethod
-    def __save_modified_zip(custom_profile: Profile, zip_file_path: str, outputDirectory: str, xmlOutput: str) -> None:
+    def __save_modified_zip(custom_profile: Profile, zip_file_path: str, output_directory: str, xml_output: str) -> None:
         # Read from zip
-        folderName, xccdfFileName = StigZip.extract_xccdf(
-            zip_file_path=zip_file_path, output_directory=outputDirectory)
+        folder_name, xccdf_file_name = StigZip.extract_xccdf(
+            zip_file_path=zip_file_path, output_directory=output_directory)
 
         # Create XML
-        xmlInput: str = os.path.join(
-            outputDirectory, f"{folderName}/{xccdfFileName}")
+        xml_input: str = os.path.join(
+            output_directory, f"{folder_name}/{xccdf_file_name}")
         StigGenerator.__generate_xml_file(
-            custom_profile=custom_profile, original_xml_file=xmlInput, generated_xml_file=xmlOutput)
+            custom_profile=custom_profile, original_xml_file=xml_input, generated_xml_file=xml_output)
 
         # Create new zip
 
-        StigZip.generate_stig_zip(zip_file_path=zip_file_path, output_directory=outputDirectory,
-                                  folder_in_zip=folderName, xccdf_file_in_zip=xccdfFileName, modified_xccdf=xmlOutput)
+        StigZip.generate_stig_zip(zip_file_path=zip_file_path, output_directory=output_directory,
+                                  folder_in_zip=folder_name, xccdf_file_in_zip=xccdf_file_name, modified_xccdf=xml_output)
 
         # Cleanup
         # os.remove(xmlOutput)
@@ -298,7 +298,9 @@ class StigGenerator:
             _: int = StigGenerator.__clear_unix()
 
     @staticmethod
-    def __clear_unix() -> int: return os.system(command='clear')
+    def __clear_unix() -> int:
+        return os.system(command='clear')
 
     @staticmethod
-    def __clear_win32() -> int: return os.system(command='cls')
+    def __clear_win32() -> int:
+        return os.system(command='cls')
