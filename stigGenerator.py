@@ -180,7 +180,7 @@ class StigGenerator:
             profile_name=custom_profile.title, preferences=preferences, output_directory=output_directory)
 
     @staticmethod
-    def generate_ansible(ansible_zip: str, preferences: list[Preference], output_directory: str) -> None:
+    def generate_ansible(ansible_zip: str, output_directory: str) -> None:
         # TODO: Extract Ansible within zip file
         # TODO: parse rationale
         # TODO: get rule id numbers
