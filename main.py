@@ -13,6 +13,7 @@ ENCODING: str = "utf-8"
 
 def main() -> None:
 
+    # Handle arguments
     arg_parser: argparse.ArgumentParser = argparse.ArgumentParser(
         description="Generate Custom STIG profile baseline of yor choice.")
     if (len(sys.argv)) == 1:
@@ -21,8 +22,11 @@ def main() -> None:
                             help="Path to STIG Zip file")
     arg_parser.add_argument("-o", dest="out_path", type=str, required=False,
                             help="Directory for modified STIG Zip file (default: input directory)")
+    arg_parser.add_argument("-a", dest="ansible_path", type=str, required=False,
+                            help="Path to STIG Ansible Zip file")
 
     args: argparse.Namespace = arg_parser.parse_args()
+
     stig_file: str = os.path.abspath(args.in_path)
     if (stig_file.endswith(".zip") is False):
         raise Exception("Invalid input parameter.")
@@ -34,6 +38,15 @@ def main() -> None:
     if (os.path.isdir(output_dir) is False):
         raise Exception("Invalid otput parameter.")
 
+    ansible_zip_file: str = ""
+    generate_ansible: bool = False
+    if (args.ansible_path):
+        generate_ansible = True
+        ansible_zip_file = os.path.abspath(args.ansible_path)
+        if (ansible_zip_file.endswith(".zip") is False):
+            raise Exception("Invalid input parameter.")
+
+    # Start processing
     stig_parser: StigParser = StigParser.parse_zip(zip_file=stig_file)
     benchmark: Benchmark = stig_parser.Benchmark
 
@@ -57,6 +70,10 @@ def main() -> None:
         custom_profile=custom_profile, stig_file=stig_file, output_directory=output_dir, temp_xml_file=tmp_file)
     StigGenerator.generate_rationale(
         custom_profile=custom_profile, preferences=preferences, output_directory=output_dir)
+
+    if (generate_ansible):
+        StigGenerator.generate_ansible(
+            ansible_zip=ansible_zip_file, output_directory=output_dir)
 
     StigGenerator.close()
 

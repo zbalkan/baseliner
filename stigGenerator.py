@@ -5,6 +5,7 @@ import sys
 import xml.etree.ElementTree as ET
 
 from colorama import Fore, Style
+from stigAnsible import StigAnsible
 
 from stigParser import Benchmark, Group, Preference, Profile, Select
 from stigZip import StigZip
@@ -177,6 +178,25 @@ class StigGenerator:
     def generate_rationale(custom_profile: Profile, preferences: list[Preference], output_directory: str) -> None:
         StigGenerator.__save_rationale_xml(
             profile_name=custom_profile.title, preferences=preferences, output_directory=output_directory)
+
+    @staticmethod
+    def generate_ansible(ansible_zip: str, preferences: list[Preference], output_directory: str) -> None:
+        # TODO: Extract Ansible within zip file
+        # TODO: parse rationale
+        # TODO: get rule id numbers
+        # TODO: open tasks/main.yml:
+        # TODO: filter out tasks,
+        # TODO: generate new yaml, save it output path
+        import_path: str = "Path to tasks/main.yml"
+        export_path: str = os.path.join(output_directory, "tasks.main.yml")
+
+        denylist: list = []
+
+        script: StigAnsible = StigAnsible()
+        data_in: list = script.load(path=import_path)
+        data_out: list = script.filter_denied(
+            data_in=data_in, denylist=denylist)
+        script.dump(path=export_path, data_out=data_out)
 
     @staticmethod
     def close() -> None:

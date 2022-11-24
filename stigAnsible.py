@@ -54,7 +54,7 @@ class StigAnsible:
         with open(path, "w", encoding=ENCODING) as file:
             self.dumper.dump(data_out, file, transform=strip_first_two)
 
-    def filter(self, data_in: list, denylist: list[str]) -> list:
+    def filter_denied(self, data_in: list, denylist: list[str]) -> list:
         # Complexity O(m x n) where m: number of tasks and n: number of denied rules
         def __filter_out(elem: dict, denylist: list[str]) -> Optional[dict]:
             name: str = elem['name']
