@@ -2,11 +2,12 @@ import os
 import re
 import stat
 import sys
-from typing import Optional
 import xml.etree.ElementTree as ET
+from typing import Optional
 
 from colorama import Fore, Style
 
+from stigOs import StigOs
 from stigParser import Benchmark, Group, Preference, Profile, Select
 from stigZip import StigZip
 
@@ -172,9 +173,14 @@ class StigGenerator:
         return custom_profile
 
     @staticmethod
-    def generate_profile(custom_profile: Profile, stig_file: str, output_directory: str, temp_xml_file: str) -> None:
+    def generate_profile(custom_profile: Profile, stig_file: str, output_directory: str, benchmarkId: str) -> None:
+        sanitized_file_name: str = benchmarkId.replace(
+            " ", "_").replace("-", ".")
+        temp_xml_file: str = os.path.join(
+            output_directory, f"{sanitized_file_name}.xml")
         StigGenerator.__save_modified_zip(
             custom_profile=custom_profile, zip_file_path=stig_file, output_directory=output_directory, xml_output=temp_xml_file)
+        StigOs.remove_file(temp_xml_file)
 
     @staticmethod
     def generate_rationale(custom_profile: Profile, preferences: list[Preference], output_directory: str) -> None:
@@ -184,7 +190,7 @@ class StigGenerator:
             profile_name=custom_profile.title, preferences=preferences, output_directory=output_directory)
 
     @staticmethod
-    def close() -> None:
+    def cleanup() -> None:
         os.remove(CHECKPOINT_FILE)
 
     @staticmethod
@@ -213,7 +219,7 @@ class StigGenerator:
                                   folder_in_zip=folder_name, xccdf_file_in_zip=xccdf_file_name, modified_xccdf=xml_output)
 
         # Cleanup
-        # os.remove(xmlOutput)
+        StigOs.remove_dir(os.path.join(output_directory, folder_name))
 
     @staticmethod
     def __generate_xml_file(custom_profile: Profile, original_xml_file: str, generated_xml_file: str) -> None:

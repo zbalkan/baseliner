@@ -1,9 +1,11 @@
+import glob
 import os
 import re
 import xml.etree.ElementTree as ET
 from typing import Optional
 
 import ruamel.yaml
+from stigOs import StigOs
 
 from stigZip import StigZip
 
@@ -19,20 +21,21 @@ class StigAnsible:
         self.loader = self.__get_loader()
         self.dumper = self.__get_dumper()
 
+    def cleanup(self, output_directory: str) -> None:
+        StigOs.remove_with_pattern(output_directory=output_directory,
+                                   pattern="*-ansible.zip")
+
     def generate_ansible(self, ansible_zip: str, output_directory: str) -> None:
         data_in: list = self.load_from_zip(
             ansible_zip, output_directory)
 
         denylist: list[str] = self.__generate_denylist(output_directory)
 
-        # TODO: filter out tasks,
-        # TODO: generate new yaml, save it output path
-        # TODO: cleanup zip files
-
         data_out: list = self.filter_denied(
             data_in=data_in, denylist=denylist)
 
-        export_path: str = os.path.join(output_directory, "tasks.main.yml")
+        export_path: str = os.path.join(
+            output_directory, "custom.tasks.main.yml")
         self.dump(path=export_path, data_out=data_out)
 
     def load_from_file(self, path: str) -> list:
@@ -136,7 +139,7 @@ class StigAnsible:
             os.path.join(output_directory, "rationale.xml"))
         root: ET.Element = tree.getroot()
         for child in root:
-            rule = child.attrib.get("rule")
+            rule: Optional[str] = child.attrib.get("rule")
             if (rule):
                 denylist.append(rule.replace("V-", ""))
         return denylist

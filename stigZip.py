@@ -58,7 +58,7 @@ class StigZip:
     def generate_stig_zip(zip_file_path: str, output_directory: str, folder_in_zip: str, xccdf_file_in_zip: str, modified_xccdf: str) -> None:
         zin: ZipFile = ZipFile(zip_file_path, 'r')
         zout: ZipFile = ZipFile(os.path.join(
-            output_directory, os.path.basename(zip_file_path).replace(".zip", "_new.zip")), 'w')
+            output_directory, os.path.basename(zip_file_path).replace(".zip", "_custom.zip")), 'w')
         for item in zin.infolist():
             buffer: bytes = zin.read(item.filename)
             if (item.filename.find(xccdf_file_in_zip) == -1):

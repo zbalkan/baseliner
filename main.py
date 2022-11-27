@@ -64,20 +64,17 @@ def main() -> None:
     custom_profile: Profile = StigGenerator.get_custom_profile(
         preferences=preferences)
 
-    sanitized_file_name: str = benchmark.id.replace(" ", "_").replace("-", ".")
-    tmp_file: str = os.path.join(output_dir, f"{sanitized_file_name}.xml")
-
     StigGenerator.generate_profile(
-        custom_profile=custom_profile, stig_file=stig_file, output_directory=output_dir, temp_xml_file=tmp_file)
+        custom_profile=custom_profile, stig_file=stig_file, output_directory=output_dir, benchmarkId=benchmark.id)
     StigGenerator.generate_rationale(
         custom_profile=custom_profile, preferences=preferences, output_directory=output_dir)
+    StigGenerator.cleanup()
 
     if (generate_ansible):
         script: StigAnsible = StigAnsible()
         script.generate_ansible(
             ansible_zip=ansible_zip_file, output_directory=output_dir)
-
-    StigGenerator.close()
+        script.cleanup(output_directory=output_dir)
 
     print("Completed.")
 
