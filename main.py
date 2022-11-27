@@ -4,6 +4,7 @@
 import argparse
 import os
 import sys
+from datetime import datetime as dt
 
 from stigAnsible import StigAnsible
 from stigGenerator import StigGenerator
@@ -63,6 +64,13 @@ def main() -> None:
 
     custom_profile: Profile = StigGenerator.get_custom_profile(
         preferences=preferences)
+
+    # Create folder for task
+    timestamp: str = dt.now().strftime("%Y%m%d%H%M%S")
+    task_dir: str = f"baseliner_{timestamp}"
+    os.mkdir(os.path.join(
+        output_dir, task_dir))
+    output_dir = os.path.join(output_dir, task_dir)
 
     StigGenerator.generate_profile(
         custom_profile=custom_profile, stig_file=stig_file, output_directory=output_dir, benchmarkId=benchmark.id)
