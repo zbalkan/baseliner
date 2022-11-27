@@ -178,6 +178,8 @@ class StigGenerator:
 
     @staticmethod
     def generate_rationale(custom_profile: Profile, preferences: list[Preference], output_directory: str) -> None:
+        if (os.path.exists(os.path.join(output_directory, "rationale.xml"))):
+            return
         StigGenerator.__save_rationale_xml(
             profile_name=custom_profile.title, preferences=preferences, output_directory=output_directory)
 

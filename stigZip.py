@@ -34,7 +34,7 @@ class StigZip:
         return folder_name, xccdf_file_name
 
     @staticmethod
-    def __extract_ansible_zip(zip_file_path: str, output_directory: str) -> Optional[str]:
+    def extract_ansible_zip(zip_file_path: str, output_directory: str) -> Optional[str]:
         archive: ZipFile = ZipFile(zip_file_path, 'r')
         extractedZip: Optional[str] = None
         for i, file in enumerate(archive.filelist):

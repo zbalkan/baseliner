@@ -1,5 +1,6 @@
 import os
 import re
+import xml.etree.ElementTree as ET
 from typing import Optional
 
 import ruamel.yaml
@@ -19,13 +20,10 @@ class StigAnsible:
         self.dumper = self.__get_dumper()
 
     def generate_ansible(self, ansible_zip: str, output_directory: str) -> None:
-        # script: StigAnsible = StigAnsible()
         data_in: list = self.load_from_zip(
             ansible_zip, output_directory)
 
-        # TODO: parse rationale
-        # TODO: get rule id numbers and add to deny list
-        denylist: list[str] = []
+        denylist: list[str] = self.__generate_denylist(output_directory)
 
         # TODO: filter out tasks,
         # TODO: generate new yaml, save it output path
@@ -43,8 +41,8 @@ class StigAnsible:
             return self.load_from_str(text=text)
 
     def load_from_zip(self, ansible_zip: str, output_directory: str) -> list:
-        extractedfile: Optional[str] = StigZip.__extract_ansible_zip(zip_file_path=ansible_zip,
-                                                                     output_directory=output_directory)
+        extractedfile: Optional[str] = StigZip.extract_ansible_zip(zip_file_path=ansible_zip,
+                                                                   output_directory=output_directory)
         if (extractedfile is None):
             raise Exception("Ansible zip file could not be found.")
 
@@ -130,3 +128,15 @@ class StigAnsible:
         yaml.indent(mapping=2, sequence=4, offset=2)
 
         return yaml
+
+    def __generate_denylist(self, output_directory: str) -> list[str]:
+        denylist: list[str] = []
+
+        tree: ET.ElementTree = ET.parse(
+            os.path.join(output_directory, "rationale.xml"))
+        root: ET.Element = tree.getroot()
+        for child in root:
+            rule = child.attrib.get("rule")
+            if (rule):
+                denylist.append(rule.replace("V-", ""))
+        return denylist
