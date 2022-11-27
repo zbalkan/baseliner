@@ -21,6 +21,15 @@ options:
   -o OUT_PATH      Directory for modified STIG Zip file (default: input directory)
   -a ANSIBLE_PATH  Path to STIG Ansible Zip file
 ```
+## Example
+Go to [DoD STIG Library](https://public.cyber.mil/stigs/downloads/) and download two files:
+ - U_CAN_Ubuntu_20-04_LTS_V1R6_STIG.zip
+- U_CAN_Ubuntu_20-04_LTS_V1R6_STIG_Ansible.zip
+
+Run the command:
+```shell
+python3 main.py -i /path/to/downloads/U_CAN_Ubuntu_20-04_LTS_V1R6_STIG.zip -o /path/of/target/directory -a /path/to/downloads/U_CAN_Ubuntu_20-04_LTS_V1R6_STIG_Ansible.zip
+```
 
 ## Installation and development
 
