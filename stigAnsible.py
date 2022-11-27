@@ -1,12 +1,11 @@
-import glob
 import os
 import re
 import xml.etree.ElementTree as ET
 from typing import Optional
 
 import ruamel.yaml
-from stigOs import StigOs
 
+from stigOs import StigOs
 from stigZip import StigZip
 
 ENCODING: str = "utf-8"
@@ -21,11 +20,7 @@ class StigAnsible:
         self.loader = self.__get_loader()
         self.dumper = self.__get_dumper()
 
-    def cleanup(self, output_directory: str) -> None:
-        StigOs.remove_with_pattern(output_directory=output_directory,
-                                   pattern="*-ansible.zip")
-
-    def generate_ansible(self, ansible_zip: str, output_directory: str) -> None:
+    def generate(self, ansible_zip: str, output_directory: str) -> None:
         data_in: list = self.load_from_zip(
             ansible_zip, output_directory)
 
@@ -37,6 +32,8 @@ class StigAnsible:
         export_path: str = os.path.join(
             output_directory, "custom.tasks.main.yml")
         self.dump(path=export_path, data_out=data_out)
+        StigOs.remove_with_pattern(output_directory=output_directory,
+                                   pattern="*-ansible.zip")
 
     def load_from_file(self, path: str) -> list:
         with open(path, 'r', encoding=ENCODING) as file:

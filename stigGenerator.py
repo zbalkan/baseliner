@@ -173,7 +173,15 @@ class StigGenerator:
         return custom_profile
 
     @staticmethod
-    def generate_profile(custom_profile: Profile, stig_file: str, output_directory: str, benchmarkId: str) -> None:
+    def generate(stig_file: str, output_dir: str, benchmark: Benchmark, preferences: list[Preference], custom_profile: Profile) -> None:
+        StigGenerator.__generate_profile(
+            custom_profile=custom_profile, stig_file=stig_file, output_directory=output_dir, benchmarkId=benchmark.id)
+        StigGenerator.__generate_rationale(
+            custom_profile=custom_profile, preferences=preferences, output_directory=output_dir)
+        StigGenerator.__cleanup()
+
+    @staticmethod
+    def __generate_profile(custom_profile: Profile, stig_file: str, output_directory: str, benchmarkId: str) -> None:
         sanitized_file_name: str = benchmarkId.replace(
             " ", "_").replace("-", ".")
         temp_xml_file: str = os.path.join(
@@ -183,14 +191,14 @@ class StigGenerator:
         StigOs.remove_file(temp_xml_file)
 
     @staticmethod
-    def generate_rationale(custom_profile: Profile, preferences: list[Preference], output_directory: str) -> None:
+    def __generate_rationale(custom_profile: Profile, preferences: list[Preference], output_directory: str) -> None:
         if (os.path.exists(os.path.join(output_directory, "rationale.xml"))):
             return
         StigGenerator.__save_rationale_xml(
             profile_name=custom_profile.title, preferences=preferences, output_directory=output_directory)
 
     @staticmethod
-    def cleanup() -> None:
+    def __cleanup() -> None:
         os.remove(CHECKPOINT_FILE)
 
     @staticmethod

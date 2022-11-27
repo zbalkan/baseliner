@@ -40,6 +40,13 @@ def main() -> None:
     if (os.path.isdir(output_dir) is False):
         raise Exception("Invalid otput parameter.")
 
+    # Create folder for task
+    timestamp: str = dt.now().strftime("%Y%m%d%H%M%S")
+    task_dir: str = f"baseliner_{timestamp}"
+    os.mkdir(os.path.join(
+        output_dir, task_dir))
+    output_dir = os.path.join(output_dir, task_dir)
+
     ansible_zip_file: str = ""
     generate_ansible: bool = False
     if (args.ansible_path):
@@ -65,24 +72,13 @@ def main() -> None:
     custom_profile: Profile = StigGenerator.get_custom_profile(
         preferences=preferences)
 
-    # Create folder for task
-    timestamp: str = dt.now().strftime("%Y%m%d%H%M%S")
-    task_dir: str = f"baseliner_{timestamp}"
-    os.mkdir(os.path.join(
-        output_dir, task_dir))
-    output_dir = os.path.join(output_dir, task_dir)
-
-    StigGenerator.generate_profile(
-        custom_profile=custom_profile, stig_file=stig_file, output_directory=output_dir, benchmarkId=benchmark.id)
-    StigGenerator.generate_rationale(
-        custom_profile=custom_profile, preferences=preferences, output_directory=output_dir)
-    StigGenerator.cleanup()
+    StigGenerator.generate(stig_file, output_dir,
+                           benchmark, preferences, custom_profile)
 
     if (generate_ansible):
         script: StigAnsible = StigAnsible()
-        script.generate_ansible(
+        script.generate(
             ansible_zip=ansible_zip_file, output_directory=output_dir)
-        script.cleanup(output_directory=output_dir)
 
     print("Completed.")
 
