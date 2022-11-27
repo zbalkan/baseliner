@@ -5,6 +5,7 @@ import argparse
 import os
 import sys
 
+from stigAnsible import StigAnsible
 from stigGenerator import StigGenerator
 from stigParser import Benchmark, Group, Preference, Profile, StigParser
 
@@ -72,7 +73,8 @@ def main() -> None:
         custom_profile=custom_profile, preferences=preferences, output_directory=output_dir)
 
     if (generate_ansible):
-        StigGenerator.generate_ansible(
+        script: StigAnsible = StigAnsible()
+        script.generate_ansible(
             ansible_zip=ansible_zip_file, output_directory=output_dir)
 
     StigGenerator.close()

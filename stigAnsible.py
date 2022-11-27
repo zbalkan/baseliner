@@ -1,7 +1,10 @@
+import os
 import re
 from typing import Optional
 
 import ruamel.yaml
+
+from stigZip import StigZip
 
 ENCODING: str = "utf-8"
 
@@ -15,25 +18,60 @@ class StigAnsible:
         self.loader = self.__get_loader()
         self.dumper = self.__get_dumper()
 
-    def load(self, path: str) -> list:
+    def generate_ansible(self, ansible_zip: str, output_directory: str) -> None:
+        # script: StigAnsible = StigAnsible()
+        data_in: list = self.load_from_zip(
+            ansible_zip, output_directory)
+
+        # TODO: parse rationale
+        # TODO: get rule id numbers and add to deny list
+        denylist: list[str] = []
+
+        # TODO: filter out tasks,
+        # TODO: generate new yaml, save it output path
+        # TODO: cleanup zip files
+
+        data_out: list = self.filter_denied(
+            data_in=data_in, denylist=denylist)
+
+        export_path: str = os.path.join(output_directory, "tasks.main.yml")
+        self.dump(path=export_path, data_out=data_out)
+
+    def load_from_file(self, path: str) -> list:
+        with open(path, 'r', encoding=ENCODING) as file:
+            text: str = file.read()
+            return self.load_from_str(text=text)
+
+    def load_from_zip(self, ansible_zip: str, output_directory: str) -> list:
+        extractedfile: Optional[str] = StigZip.__extract_ansible_zip(zip_file_path=ansible_zip,
+                                                                     output_directory=output_directory)
+        if (extractedfile is None):
+            raise Exception("Ansible zip file could not be found.")
+
+        tasks: str = bytes.decode(StigZip.read_ansible_tasks(
+            os.path.join(output_directory, extractedfile)), encoding=ENCODING)
+
+        return self.load_from_str(tasks)
+
+    def load_from_str(self, text: str) -> list:
         def __handle_exclamation_mark(text: str) -> str:
 
-            before = re.findall(r"(! systemctl.*)$", text, re.MULTILINE)
+            before: list = re.findall(r"(! systemctl.*)$", text, re.MULTILINE)
 
-            pattern = r"(! systemctl.*)$"
-            replacement = r"'\1'"
-            modified = re.sub(pattern, replacement, text, flags=re.MULTILINE)
+            pattern: str = r"(! systemctl.*)$"
+            replacement: str = r"'\1'"
+            modified: str = re.sub(pattern, replacement,
+                                   text, flags=re.MULTILINE)
 
-            after = re.findall(r"'! systemctl.*'$", modified, re.MULTILINE)
+            after: list = re.findall(
+                r"'! systemctl.*'$", modified, re.MULTILINE)
 
             if (len(before) != len(after)):
                 raise Exception("Parsing error.")
 
             return modified
 
-        with open(path, 'r', encoding=ENCODING) as file:
-            text: str = file.read()
-            return self.loader.load(__handle_exclamation_mark(text=text))
+        return self.loader.load(__handle_exclamation_mark(text=text))
 
     def dump(self, path: str, data_out: list) -> None:
         # Each task is a list item and requires offset of 0
