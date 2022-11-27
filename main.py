@@ -4,7 +4,9 @@
 import argparse
 import os
 import sys
+from datetime import datetime as dt
 
+from stigAnsible import StigAnsible
 from stigGenerator import StigGenerator
 from stigParser import Benchmark, Group, Preference, Profile, StigParser
 
@@ -13,6 +15,7 @@ ENCODING: str = "utf-8"
 
 def main() -> None:
 
+    # Handle arguments
     arg_parser: argparse.ArgumentParser = argparse.ArgumentParser(
         description="Generate Custom STIG profile baseline of yor choice.")
     if (len(sys.argv)) == 1:
@@ -21,8 +24,11 @@ def main() -> None:
                             help="Path to STIG Zip file")
     arg_parser.add_argument("-o", dest="out_path", type=str, required=False,
                             help="Directory for modified STIG Zip file (default: input directory)")
+    arg_parser.add_argument("-a", dest="ansible_path", type=str, required=False,
+                            help="Path to STIG Ansible Zip file")
 
     args: argparse.Namespace = arg_parser.parse_args()
+
     stig_file: str = os.path.abspath(args.in_path)
     if (stig_file.endswith(".zip") is False):
         raise Exception("Invalid input parameter.")
@@ -34,6 +40,22 @@ def main() -> None:
     if (os.path.isdir(output_dir) is False):
         raise Exception("Invalid otput parameter.")
 
+    # Create folder for task
+    timestamp: str = dt.now().strftime("%Y%m%d%H%M%S")
+    task_dir: str = f"baseliner_{timestamp}"
+    os.mkdir(os.path.join(
+        output_dir, task_dir))
+    output_dir = os.path.join(output_dir, task_dir)
+
+    ansible_zip_file: str = ""
+    generate_ansible: bool = False
+    if (args.ansible_path):
+        generate_ansible = True
+        ansible_zip_file = os.path.abspath(args.ansible_path)
+        if (ansible_zip_file.endswith(".zip") is False):
+            raise Exception("Invalid input parameter.")
+
+    # Start processing
     stig_parser: StigParser = StigParser.parse_zip(zip_file=stig_file)
     benchmark: Benchmark = stig_parser.Benchmark
 
@@ -50,15 +72,13 @@ def main() -> None:
     custom_profile: Profile = StigGenerator.get_custom_profile(
         preferences=preferences)
 
-    sanitized_file_name: str = benchmark.id.replace(" ", "_").replace("-", ".")
-    tmp_file: str = os.path.join(output_dir, f"{sanitized_file_name}.xml")
+    StigGenerator.generate(stig_file, output_dir,
+                           benchmark, preferences, custom_profile)
 
-    StigGenerator.generate_profile(
-        custom_profile=custom_profile, stig_file=stig_file, output_directory=output_dir, temp_xml_file=tmp_file)
-    StigGenerator.generate_rationale(
-        custom_profile=custom_profile, preferences=preferences, output_directory=output_dir)
-
-    StigGenerator.close()
+    if (generate_ansible):
+        script: StigAnsible = StigAnsible()
+        script.generate(
+            ansible_zip=ansible_zip_file, output_directory=output_dir)
 
     print("Completed.")
 
